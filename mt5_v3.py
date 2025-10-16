@@ -89,23 +89,28 @@ left_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 right_frame = tk.Frame(root, width=800)
 right_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
 
+
+account = 274338569
+password = "02011989#Hk"
+server = "Exness-MT5Trial6"
+
 # Account number label and entry
 tk.Label(left_frame, text="Account Number:").pack(pady=(5, 0))
 account_entry = tk.Entry(left_frame, width=40)
 account_entry.pack(pady=(0))
-account_entry.insert(0, "182809343")  # Default account number
+account_entry.insert(0, account)  # Default account number
 
 # Password label and entry
 tk.Label(left_frame, text="Password:").pack(pady=(5, 0))
 password_entry = tk.Entry(left_frame, show="*", width=40)
 password_entry.pack(pady=(0))
-password_entry.insert(0, "Est#89HK")  # Default password
+password_entry.insert(0, password)  # Default password
 
 # Server label and entry
 tk.Label(left_frame, text="Server:").pack(pady=(5, 0))
 server_entry = tk.Entry(left_frame, width=40)
 server_entry.pack(pady=(0))
-server_entry.insert(0, "Exness-MT5Trial6")  # Default server
+server_entry.insert(0, server)  # Default server
 
 # Connect and Disconnect buttons in the same row
 button_frame = tk.Frame(left_frame)
