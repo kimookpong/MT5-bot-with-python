@@ -615,9 +615,12 @@ log_text.tag_config("yellow", foreground="#ed8936", font=("Consolas", 8, "bold")
 
 # Function to log messages
 def log_message(message, color="black"):
-    timestamp = datetime.now().strftime("%y-%m-%d %H:%M")
+    now = datetime.now()
+    # Convert to Thai Buddhist year (add 543 years) and get last 2 digits
+    thai_year = str(now.year + 543)[-2:]
+    timestamp = now.strftime(f"%d/%m/{thai_year} %H:%M")
     log_text.config(state="normal")
-    log_text.insert(tk.END,timestamp + " | " + message + "\n",color)
+    log_text.insert(tk.END,timestamp + " " + message + "\n",color)
     log_text.config(state="disabled")
     log_text.see(tk.END)
 
