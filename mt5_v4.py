@@ -551,7 +551,7 @@ def refresh_chart():
     except Exception as e:
         # Only log error if we're actually trading (to avoid spam during startup)
         if hasattr(mt5, 'initialized') and mt5.initialized():
-            log_message(f"[ERROR] Chart refresh failed: {e}", "red")
+            log_message(f"❌ รีเฟรชกราฟล้มเหลว", "red")
 
 # Bind checkbox variables to refresh function
 show_supertrend.trace_add('write', lambda *args: refresh_chart())
@@ -615,7 +615,7 @@ log_text.tag_config("yellow", foreground="#ed8936", font=("Consolas", 8, "bold")
 
 # Function to log messages
 def log_message(message, color="black"):
-    timestamp = datetime.now().strftime("%y-%m-%d %H:%M:%S")
+    timestamp = datetime.now().strftime("%y-%m-%d %H:%M")
     log_text.config(state="normal")
     log_text.insert(tk.END,timestamp + " | " + message + "\n",color)
     log_text.config(state="disabled")
@@ -636,25 +636,25 @@ def connect_to_mt5():
 
     if not account_number or not password or not server:
         # messagebox.showwarning("Warning", "Please fill in all fields.")
-        log_message("[WARNING] Please fill in all fields.")
+        log_message("⚠️ กรุณากรอกข้อมูลให้ครบ")
         return
 
-    log_message("[INFO] Initializing MT5...", "blue")
+    log_message("🔄 กำลังเชื่อมต่อ MT5...", "blue")
     if not mt5.initialize(login=int(account_number), password=password, server=server):
-        error_message = f"[ERROR] MT5 Initialization failed: {mt5.last_error()}"
+        error_message = f"❌ เชื่อมต่อล้มเหลว: {mt5.last_error()}"
         # messagebox.showerror("Error", error_message)
         log_message(error_message, "red")
         return
 
-    log_message("[INFO] Logging in to MT5...", "blue")
+    log_message("🔐 กำลังเข้าสู่ระบบ...", "blue")
     if not mt5.login(int(account_number), password=password, server=server):
-        error_message = f"[ERROR] Login failed: {mt5.last_error()}"
+        error_message = f"❌ เข้าระบบล้มเหลว: {mt5.last_error()}"
         # messagebox.showerror("Error", error_message)
         log_message(error_message, "red")
         mt5.shutdown()
         return
 
-    success_message = "[SUCCESS] Successfully connected to MT5!"
+    success_message = "✅ เชื่อมต่อสำเร็จ!"
     account_balace()
     # messagebox.showinfo("Success", success_message)
     log_message(success_message, "green")
@@ -678,9 +678,9 @@ def connect_to_mt5():
 
 # Function to handle MT5 disconnection
 def disconnect_mt5():
-    log_message("[INFO] Shutting down MT5...", "blue")
+    log_message("🔌 กำลังตัดการเชื่อมต่อ...", "blue")
     mt5.shutdown()
-    log_message("[SUCCESS] Successfully disconnected from MT5!", "green")
+    log_message("✅ ตัดการเชื่อมต่อสำเร็จ!", "green")
     # messagebox.showinfo("Disconnected", "Successfully disconnected from MT5!")
     connect_button.config(state="normal")
     disconnect_button.config(state="disabled")
@@ -704,7 +704,7 @@ def disconnect_mt5():
 # Function to start the bot
 def start_bot():
     set_status(True)
-    log_message("[INFO] Starting trading bot...")
+    log_message("🚀 เริ่มบอท...", "green")
     bot_thread = threading.Thread(target=run_trading_bot, daemon=True)
     bot_thread.start()
     start_bot_button.config(state="disabled")
@@ -723,7 +723,7 @@ def start_bot():
 # Function to pause the bot
 def pause_bot():
     set_status(False)
-    log_message("[INFO] Pausing trading bot...")
+    log_message("⏸️ หยุดบอทชั่วคราว", "yellow")
     # bot_thread = threading.Thread(target=run_trading_bot, daemon=True)
     # bot_thread.start()
     start_bot_button.config(state="normal")
@@ -763,7 +763,7 @@ def trading_buy(current_time):
         set_last_order_time(current_time)
         set_trigger_price(0)
     else:
-        log_message(f"[ERROR] Buy order failed: {result}", "red")
+        log_message(f"❌ คำสั่ง BUY ล้มเหลว: {result}", "red")
 
 def trading_sell(current_time):
     symbol = symbol_var.get()
@@ -787,7 +787,7 @@ def trading_sell(current_time):
         set_last_order_time(current_time)
         set_trigger_price(0)
     else:
-        log_message(f"[ERROR] Sell order failed: {result}", "red")
+        log_message(f"❌ คำสั่ง SELL ล้มเหลว: {result}", "red")
 
 def trading_close(position,current_time):
         symbol = symbol_var.get() 
@@ -811,20 +811,20 @@ def trading_close(position,current_time):
         }
         result = mt5.order_send(request)
         if result.retcode == mt5.TRADE_RETCODE_DONE:
-            log_message(f"[CLOSE] P/L: {position.profit:.2f} USD", "green" if position.profit >=0 else "red")
+            log_message(f"💰 ปิดออเดอร์ P/L: {position.profit:.2f} USD", "green" if position.profit >=0 else "red")
             set_stat("order", get_stat("order") + 1)
             set_stat("profit", get_stat("profit") + float(position.profit))
             # set_last_order_time(current_time)
 
             max_order = max_order_var.get()
             if get_stat("order") >= int(max_order):
-                log_message(f"[INFO] limit order reached. Stop bot!!", "blue")
+                log_message(f"🛑 ถึงจำนวนออเดอร์สูงสุด หยุดบอท!", "blue")
                 disconnect_mt5()
                 return
             
         else:
             log_message(
-                f"[ERROR] Failed to close position {ticket} for {symbol}. Error: {result}",
+                f"❌ ปิดออเดอร์ล้มเหลว {ticket}: {result}",
                 "red",
             )
 
@@ -845,7 +845,7 @@ def run_trading_bot():
 
         account_balace()
         if not mt5.symbol_select(symbol, True):
-            log_message(f"[ERROR] Unable to select symbol {symbol}", "red")
+            log_message(f"❌ ไม่พบสัญลักษณ์ {symbol}", "red")
             return
         df = get_candlestick_data(symbol, interval, 1000)
         # Show only half of the data (125 candles) for better visibility
@@ -883,269 +883,239 @@ def run_trading_bot():
                 process_order_label.configure(text=f"{len(positions)} ({total_profit:.2f} USD)", style='Profit.TLabel')
         
         if indicator == "BULLMARKET":
-            EMA21_curr,EMA21_prev = df['EMA21'].iloc[-1], df['EMA21'].iloc[-2]
-            SMA20_curr,SMA20_prev = df['SMA20'].iloc[-1], df['SMA20'].iloc[-2]
+            # ดึงข้อมูลที่จำเป็น
+            close_price = df['close'].iloc[-1]
+            ema_fast = df['EMA_Fast'].iloc[-1]
+            ema_slow = df['EMA_Slow'].iloc[-1]
+            ema_trend = df['EMA_Trend'].iloc[-1]
 
+            # --- EXIT LOGIC ---
+            # ตรวจสอบเฉพาะ Position ฝั่ง BUY
             if len(positions) > 0:
                 for position in positions:
-                    if(profit < get_trigger_price()  and get_trigger_price() > 0):
-                        trading_close(position,current_time)
-                    elif EMA21_curr > SMA20_curr and EMA21_prev < SMA20_prev and current_time != get_last_order_time():
-                        trading_close(position,current_time)
-                    elif EMA21_curr < SMA20_curr and EMA21_prev > SMA20_prev  and current_time != get_last_order_time():
-                        trading_close(position,current_time)
-                    else:
-                        lots = float(lot_var.get()) * 100
-                        if profit > (get_trigger_price() + (2*lots)) and profit > (2*lots):
-                            trigger_profit = get_trigger_price() + (1*lots)
-                            set_trigger_price(trigger_profit)
-                            log_message(f"[BOT] Trigger Profit: {trigger_profit}", "blue")
-            # EMA's cross to the upside make buy order (with RSI filter)
-            elif (EMA21_curr > SMA20_curr and EMA21_prev < SMA20_prev and 
-                current_time != get_last_order_time() and df['RSI'].iloc[-1] < 70):
-                trading_buy(current_time)
-                log_message(f"[BMSB] Buy order executed - RSI: {df['RSI'].iloc[-1]:.1f}")
-            # EMA's cross to the downside make sell order (with RSI filter)
-            elif (EMA21_curr < SMA20_curr and EMA21_prev > SMA20_prev and 
-                  current_time != get_last_order_time() and df['RSI'].iloc[-1] > 30):
-                trading_sell(current_time)
-                log_message(f"[BMSB] Sell order executed - RSI: {df['RSI'].iloc[-1]:.1f}")
+                    if position.type == mt5.ORDER_TYPE_BUY:
+                        # ✅ STOP LOSS: ปิดทันทีถ้าราคาปิด "ต่ำกว่า" เส้นล่างของ Band (EMA_Slow)
+                        # การใช้ราคาปิดช่วยกรอง Noise ของไส้เทียนที่ทะลุลงไปชั่วคราว
+                        if df['close'].iloc[-1] < ema_slow:
+                            trading_close(position, current_time)
+                            log_message(f"[BM] 🛑 SL: ราคาหลุดแนวรับ | P/L: {position.profit:.2f}", "red")
+            
+            # --- ENTRY LOGIC ---
+            # เข้าออเดอร์ BUY เมื่อไม่มี Position และเงื่อนไขทั้งหมดเป็นจริง
+            elif len(positions) == 0:
+                
+                # --- BUY CONDITIONS ---
+                # 1. อยู่ในแนวโน้มกระทิง (ราคาอยู่เหนือเส้น EMA 100)
+                is_in_bull_trend = close_price > ema_trend
+                
+                # 2. ราคาย่อตัวเข้ามาใน "โซนซื้อ" (ระหว่าง EMA 21 และ 55)
+                # เราจะรอให้แท่งเทียน "ปิด" ในโซนนี้เพื่อยืนยันการย่อตัว
+                is_in_buy_zone = df['close'].iloc[-1] <= ema_fast and df['close'].iloc[-1] >= ema_slow
+                
+                # 3. RSI ไม่ควร Overbought เกินไป (ผ่อนปรนเป็น < 75)
+                rsi_curr = df['RSI'].iloc[-1]
+                is_rsi_ok = rsi_curr < 75
+
+                if is_in_bull_trend and is_in_buy_zone and is_rsi_ok and current_time != get_last_order_time():
+                    # ตั้ง Stop Loss ไว้ใต้เส้น EMA_Slow เล็กน้อยเพื่อเป็น Buffer
+                    # สำหรับ XAU/BTC การตั้ง SL ตาม % อาจจะดีกว่า
+                    # ตัวอย่าง: ตั้ง SL ต่ำกว่าเส้น EMA_Slow ไป 0.15%
+                    stop_loss_price = ema_slow * 0.9985 
+                    
+                    trading_buy(current_time, sl=stop_loss_price)
+                    log_message(f"[BM] ✅ BUY: ย่อตัวในโซนซื้อ", "green")
 
         elif indicator == "BOLLINGER":
-            UpperBand_curr,UpperBand_prev = df['UpperBand'].iloc[-1], df['UpperBand'].iloc[-2]
-            LowerBand_curr,LowerBand_prev = df['LowerBand'].iloc[-1], df['LowerBand'].iloc[-2]
+            # ดึงข้อมูลที่จำเป็น
+            close_curr, close_prev = df['close'].iloc[-1], df['close'].iloc[-2]
+            lower_band_curr, lower_band_prev = df['BB_Lower'].iloc[-1], df['BB_Lower'].iloc[-2]
+            middle_band_curr = df['BB_Middle'].iloc[-1]
+            upper_band_curr, upper_band_prev = df['BB_Upper'].iloc[-1], df['BB_Upper'].iloc[-2]
+            rsi_curr, rsi_prev = df['RSI'].iloc[-1], df['RSI'].iloc[-2]
 
-            # close order
+            # --- EXIT LOGIC ---
             if len(positions) > 0:
                 for position in positions:
-                    profit = float(position.profit)
+                    is_buy = position.type == mt5.ORDER_TYPE_BUY
+                    is_sell = position.type == mt5.ORDER_TYPE_SELL
 
-                    if(profit < get_trigger_price()  and get_trigger_price() > 0):
-                        trading_close(position,current_time)
-                    elif position.type == mt5.ORDER_TYPE_BUY:
-                        if UpperBand_curr < df['close'].iloc[-1] and UpperBand_prev > df['close'].iloc[-2]:
-                            trading_close(position,current_time)
-                        else:
-                            lots = float(lot_var.get()) * 100
-                            if profit > (get_trigger_price() + (2*lots)) and profit > (2*lots):
-                                trigger_profit = get_trigger_price() + (1*lots)
-                                set_trigger_price(trigger_profit)
-                                log_message(f"[BOT] Trigger Profit: {trigger_profit}", "blue")
-                    elif position.type == mt5.ORDER_TYPE_SELL:
-                        if LowerBand_curr > df['close'].iloc[-1] and LowerBand_prev < df['close'].iloc[-2]:
-                            trading_close(position,current_time)
-                        else:
-                            lots = float(lot_var.get()) * 100
-                            if profit > (get_trigger_price() + (2*lots)) and profit > (2*lots):
-                                trigger_profit = get_trigger_price() + (1*lots)
-                                set_trigger_price(trigger_profit)
-                                log_message(f"[BOT] Trigger Profit: {trigger_profit}", "blue")
+                    # ✅ TAKE PROFIT: ปิดทำกำไรเมื่อราคาแตะเส้นกลาง (Middle Band)
+                    if is_buy and close_curr >= middle_band_curr:
+                        trading_close(position, current_time)
+                        log_message(f"[BB] ✅ TP BUY ที่เส้นกลาง | P/L: {position.profit:.2f}", "green")
+                        continue
+                    elif is_sell and close_curr <= middle_band_curr:
+                        trading_close(position, current_time)
+                        log_message(f"[BB] ✅ TP SELL ที่เส้นกลาง | P/L: {position.profit:.2f}", "green")
+                        continue
+
+                    # ✅ STOP LOSS: (Optional but recommended) ปิดเมื่อราคากลับไปทะลุกรอบเดิมอีกครั้ง
+                    if is_buy and close_curr < lower_band_curr:
+                        trading_close(position, current_time)
+                        log_message(f"[BB] 🛑 SL BUY: หลุดกรอบล่าง | P/L: {position.profit:.2f}", "red")
+                        continue
+                    elif is_sell and close_curr > upper_band_curr:
+                        trading_close(position, current_time)
+                        log_message(f"[BB] 🛑 SL SELL: หลุดกรอบบน | P/L: {position.profit:.2f}", "red")
+                        continue
             
-                log_message("[BB] close sell order executed")
-                if len(positions) > 0:
-                    for position in positions:
-                        #check it is sell order
-                        if position.type == mt5.ORDER_TYPE_SELL:
-                            trading_close(position,current_time)
+            # --- ENTRY LOGIC ---
+            elif len(positions) == 0:
+                # --- BUY CONDITIONS ---
+                # 1. แท่งก่อนหน้า "ปิดนอก" กรอบล่าง
+                # 2. แท่งปัจจุบัน "ปิดกลับเข้ามาใน" กรอบล่าง
+                # 3. RSI ยืนยันการกลับตัว (ข้าม 30 ขึ้นมา)
+                was_outside_lower = close_prev < lower_band_prev
+                is_inside_lower = close_curr > lower_band_curr
+                is_rsi_buy_confirm = rsi_prev < 30 and rsi_curr > 30
 
+                if was_outside_lower and is_inside_lower and is_rsi_buy_confirm and current_time != get_last_order_time():
+                    sl_price = df['low'].iloc[-2] # SL ที่ low ของแท่งที่ทะลุออกไป
+                    trading_buy(current_time, sl=sl_price)
+                    log_message(f"[BB] ✅ BUY: กลับเข้ากรอบล่าง RSI>30", "blue")
 
-            # buy and sell order (with RSI filter)
-            elif (UpperBand_curr > df['close'].iloc[-1] and UpperBand_prev < df['close'].iloc[-2] and 
-                current_time != get_last_order_time() and df['RSI'].iloc[-1] > 30):
-                log_message(f"[BB] Sell order executed - RSI: {df['RSI'].iloc[-1]:.1f}")
-                trading_sell(current_time)
-            elif (LowerBand_curr < df['close'].iloc[-1] and LowerBand_prev > df['close'].iloc[-2] and 
-                  current_time != get_last_order_time() and df['RSI'].iloc[-1] < 70):
-                log_message(f"[BB] Buy order executed - RSI: {df['RSI'].iloc[-1]:.1f}")
-                trading_buy(current_time)
-                        # if UpperBand_curr < df['close'].iloc[-1] and UpperBand_prev > df['close'].iloc[-2] and current_time != get_last_order_time():
+                # --- SELL CONDITIONS ---
+                # 1. แท่งก่อนหน้า "ปิดนอก" กรอบบน
+                # 2. แท่งปัจจุบัน "ปิดกลับเข้ามาใน" กรอบบน
+                # 3. RSI ยืนยันการกลับตัว (ตัด 70 ลงมา)
+                was_outside_upper = close_prev > upper_band_prev
+                is_inside_upper = close_curr < upper_band_curr
+                is_rsi_sell_confirm = rsi_prev > 70 and rsi_curr < 70
+                
+                if was_outside_upper and is_inside_upper and is_rsi_sell_confirm and current_time != get_last_order_time():
+                    sl_price = df['high'].iloc[-2] # SL ที่ high ของแท่งที่ทะลุออกไป
+                    trading_sell(current_time, sl=sl_price)
+                    log_message(f"[BB] 🔻 SELL: กลับเข้ากรอบบน RSI<70", "red")
 
         elif indicator == "SUPERTREND":
             # Enhanced Supertrend Strategy - Optimized for Risk Management & Maximum Profit
             # Using Supertrend with RSI confirmation and dynamic trailing stop
             
-            Supertrend_curr, Supertrend_prev = df['Supertrend'].iloc[-1], df['Supertrend'].iloc[-2]
-            RSI_curr = df['RSI'].iloc[-1]
+            close_price = df['close'].iloc[-1]
+            supertrend_val = df['Supertrend'].iloc[-1]
+            supertrend_dir = df['Supertrend_Direction'].iloc[-1]
+            supertrend_dir_prev = df['Supertrend_Direction'].iloc[-2]
+            rsi_curr = df['RSI'].iloc[-1]
             
             # Close existing positions with enhanced profit protection
             if len(positions) > 0:
                 for position in positions:
-                    profit = float(position.profit)
-                    entry_price = position.price_open
-                    current_price = df['close'].iloc[-1]
-                    
-                    # Calculate price movement percentage
-                    if position.type == mt5.ORDER_TYPE_BUY:
-                        price_change_pct = ((current_price - entry_price) / entry_price) * 100
-                    else:
-                        price_change_pct = ((entry_price - current_price) / entry_price) * 100
-                    
-                    # 1. HARD STOP-LOSS: Exit if loss exceeds -2% (Risk Management)
-                    if price_change_pct < -2.0:
-                        trading_close(position, current_time)
-                        log_message(f"[ST] Hard stop-loss triggered at -{abs(price_change_pct):.2f}% | Loss: {profit:.2f} USD", "red")
-                    
-                    # 2. SIGNAL-BASED EXIT: Close on opposite Supertrend signal
-                    elif (position.type == mt5.ORDER_TYPE_BUY and 
-                          df['Supertrend_Direction'].iloc[-1] == -1 and 
-                          df['Supertrend_Direction'].iloc[-2] == 1):
-                        trading_close(position, current_time)
-                        log_message(f"[ST] BUY closed on bearish signal | P/L: {profit:.2f} USD", "yellow")
-                    
-                    elif (position.type == mt5.ORDER_TYPE_SELL and 
-                          df['Supertrend_Direction'].iloc[-1] == 1 and 
-                          df['Supertrend_Direction'].iloc[-2] == -1):
-                        trading_close(position, current_time)
-                        log_message(f"[ST] SELL closed on bullish signal | P/L: {profit:.2f} USD", "yellow")
-                    
-                    # 3. PROFIT PROTECTION: Dynamic trailing stop with trigger_price tracking
-                    # ใช้ get_trigger_price() และ set_trigger_price() เพื่อล็อคกำไรที่เพิ่มขึ้นเรื่อยๆ
-                    elif profit > 0:
-                        lot_value = float(lot_var.get()) * 100
-                        current_trigger = get_trigger_price()
-                        
-                        # ✅ CHECK STOP-LOSS: ถ้ากำไรตกลงต่ำกว่า trigger_price ให้ปิดทันที
-                        if current_trigger > 0 and profit < current_trigger:
-                            trading_close(position, current_time)
-                            log_message(f"[ST] 🛑 Trailing stop triggered at {profit:.2f} USD (was protected at {current_trigger:.2f} USD)", "yellow")
-                        
-                        # Tier 1: High Profit Zone (>15x lot)
-                        # เมื่อกำไรสูงมาก ให้ล็อคกำไร 75% และมี minimum profit อย่างน้อย 12x lot
-                        elif profit > (5 * lot_value):
-                            minimum_profit = 4 * lot_value  # ต้องทำกำไรอย่างน้อย 4x lot
-                            trailing_profit = profit * 0.80  # ป้องกันกำไร 70%
-                            new_trigger = max(minimum_profit, trailing_profit)
+                    is_buy = position.type == mt5.ORDER_TYPE_BUY
+                    is_sell = position.type == mt5.ORDER_TYPE_SELL
 
-                            # อัพเดท trigger_price ถ้ากำไรเพิ่มขึ้น
-                            if new_trigger > current_trigger:
-                                set_trigger_price(new_trigger)
-                                log_message(f"[ST] 🏆 Tier 1 activated: Trailing stop updated to {new_trigger:.2f} USD (70% of {profit:.2f} USD)", "blue")
-                        
-                        # Tier 2: Medium-High Profit (10-15x lot)
-                        # ล็อคกำไร 70% และมี minimum profit อย่างน้อย 8x lot
-                        elif profit > (4 * lot_value):
-                            minimum_profit = 3 * lot_value  # ต้องทำกำไรอย่างน้อย 3x lot
-                            trailing_profit = profit * 0.70  # ป้องกันกำไร 70%
-                            new_trigger = max(minimum_profit, trailing_profit)
-                            
-                            # อัพเดท trigger_price ถ้ากำไรเพิ่มขึ้น
-                            if new_trigger > current_trigger:
-                                set_trigger_price(new_trigger)
-                                log_message(f"[ST] 💎 Tier 2 activated: Trailing stop updated to {new_trigger:.2f} USD (70% of {profit:.2f} USD)", "blue")
-                        
-                        # Tier 3: Medium Profit (5-10x lot)
-                        # ล็อคกำไร 60% และมี minimum profit อย่างน้อย 4x lot
-                        elif profit > (3 * lot_value):
-                            minimum_profit = 2 * lot_value  # ต้องทำกำไรอย่างน้อย 2x lot
-                            trailing_profit = profit * 0.60  # ป้องกันกำไร 60%
-                            new_trigger = max(minimum_profit, trailing_profit)
-                            
-                            # อัพเดท trigger_price ถ้ากำไรเพิ่มขึ้น
-                            if new_trigger > current_trigger:
-                                set_trigger_price(new_trigger)
-                                log_message(f"[ST] 💰 Tier 3 activated: Trailing stop updated to {new_trigger:.2f} USD (60% of {profit:.2f} USD)", "blue")
-                        
-                        # Tier 4: Low Profit (3-5x lot)
-                        # ล็อคกำไร 50% และมี minimum profit อย่างน้อย 2x lot
-                        elif profit > (1.5 * lot_value):
-                            minimum_profit = 1 * lot_value  # ต้องทำกำไรอย่างน้อย 1x lot
-                            trailing_profit = profit * 0.50  # ป้องกันกำไร 50%
-                            new_trigger = max(minimum_profit, trailing_profit)
-                            
-                            # อัพเดท trigger_price ถ้ากำไรเพิ่มขึ้น
-                            if new_trigger > current_trigger:
-                                set_trigger_price(new_trigger)
-                                log_message(f"[ST] ✨ Tier 4 activated: Trailing stop updated to {new_trigger:.2f} USD (50% of {profit:.2f} USD)", "blue")
-                    
-                    # 4. RSI EXTREME EXIT: Close if RSI reaches extreme levels (reduce risk)
-                    elif (position.type == mt5.ORDER_TYPE_BUY and RSI_curr > 80):
+                    # ปิด Buy ถ้า Supertrend พลิกเป็นลง
+                    if is_buy and supertrend_dir == -1:
                         trading_close(position, current_time)
-                        log_message(f"[ST] BUY closed - RSI overbought at {RSI_curr:.1f} | P/L: {profit:.2f} USD", "yellow")
-                    
-                    elif (position.type == mt5.ORDER_TYPE_SELL and RSI_curr < 20):
+                        log_message(f"[ST] 🔄 ปิด BUY: สัญญาณพลิกลง | P/L: {position.profit:.2f}", "yellow")
+                        continue # ไปยัง position ถัดไป
+
+                    # ปิด Sell ถ้า Supertrend พลิกเป็นขึ้น
+                    elif is_sell and supertrend_dir == 1:
                         trading_close(position, current_time)
-                        log_message(f"[ST] SELL closed - RSI oversold at {RSI_curr:.1f} | P/L: {profit:.2f} USD", "yellow")
-            
-            # Entry signals with strong confirmation (reduce false signals)
-            elif len(positions) == 0:  # Only enter when no positions
+                        log_message(f"[ST] 🔄 ปิด SELL: สัญญาณพลิกขึ้น | P/L: {position.profit:.2f}", "yellow")
+                        continue # ไปยัง position ถัดไป
+                    
+                    # ✅ EXIT 2: Trailing Stop Loss โดยใช้เส้น Supertrend (หัวใจของกลยุทธ์)
+                    # เราจะใช้เส้น Supertrend ของ "แท่งก่อนหน้า" เป็น SL เพื่อให้ราคามีพื้นที่หายใจ
+                    trailing_stop_price = df['Supertrend'].iloc[-2]
+
+                    if is_buy and close_price < trailing_stop_price:
+                        trading_close(position, current_time)
+                        log_message(f"[ST] 🛑 SL BUY: ราคาต่ำกว่า ST | P/L: {position.profit:.2f}", "red")
+                        continue
+
+                    elif is_sell and close_price > trailing_stop_price:
+                        trading_close(position, current_time)
+                        log_message(f"[ST] 🛑 SL SELL: ราคาสูงกว่า ST | P/L: {position.profit:.2f}", "red")
+                        continue
+
+            # เข้าออเดอร์เมื่อไม่มี Position ค้างอยู่เท่านั้น
+            elif len(positions) == 0:
                 
-                # BUY CONDITIONS (All must be true):
-                # 1. Supertrend turns bullish
-                # 2. RSI between 40-60 (optimal zone, not overbought)
-                # 3. RSI trending up (momentum confirmation)
-                if (df['Supertrend_Direction'].iloc[-1] == 1 and 
-                    df['Supertrend_Direction'].iloc[-2] == -1 and 
-                    40 < RSI_curr < 60 and
-                    df['RSI'].iloc[-1] > df['RSI'].iloc[-2] and  # RSI rising
-                    current_time != get_last_order_time()):
-                    
+                # --- BUY CONDITIONS ---
+                # 1. Supertrend เพิ่งพลิกเป็นขาขึ้น
+                # 2. RSI > 50 เพื่อยืนยัน Momentum ฝั่งขึ้น
+                is_bullish_flip = supertrend_dir == 1 and supertrend_dir_prev == -1
+                
+                if is_bullish_flip and rsi_curr > 50 and current_time != get_last_order_time():
+                    # ไม่จำเป็นต้องมี SL ในคำสั่ง เพราะ logic ด้านบนจะจัดการให้
                     trading_buy(current_time)
-                    log_message(f"[ST] ✓ BUY ENTRY - Supertrend bullish + RSI optimal at {RSI_curr:.1f}", "green")
+                    log_message(f"[ST] ✅ BUY: ST พลิกขึ้น RSI {rsi_curr:.1f}", "green")
+                    # อาจจะตั้ง SL เริ่มต้นที่เส้น Supertrend ปัจจุบันเพื่อความปลอดภัย
+                    # mt5.modify_position(ticket, sl=supertrend_val)
+
+                # --- SELL CONDITIONS ---
+                # 1. Supertrend เพิ่งพลิกเป็นขาลง
+                # 2. RSI < 50 เพื่อยืนยัน Momentum ฝั่งลง
+                is_bearish_flip = supertrend_dir == -1 and supertrend_dir_prev == 1
                 
-                # SELL CONDITIONS (All must be true):
-                # 1. Supertrend turns bearish  
-                # 2. RSI between 40-60 (optimal zone, not oversold)
-                # 3. RSI trending down (momentum confirmation)
-                elif (df['Supertrend_Direction'].iloc[-1] == -1 and 
-                      df['Supertrend_Direction'].iloc[-2] == 1 and 
-                      40 < RSI_curr < 60 and
-                      df['RSI'].iloc[-1] < df['RSI'].iloc[-2] and  # RSI falling
-                      current_time != get_last_order_time()):
-                    
+                if is_bearish_flip and rsi_curr < 50 and current_time != get_last_order_time():
                     trading_sell(current_time)
-                    log_message(f"[ST] ✓ SELL ENTRY - Supertrend bearish + RSI optimal at {RSI_curr:.1f}", "red")
-
-
+                    log_message(f"[ST] 🔻 SELL: ST พลิกลง RSI {rsi_curr:.1f}", "red")
+                    # mt5.modify_position(ticket, sl=supertrend_val)                    
+                    
         elif indicator == "DONCHAIN":
             # Donchian Channels Strategy (DCL=Lower, DCU=Upper, DCH=Highest)
-            DCL_curr, DCL_prev = df['DCL'].iloc[-1], df['DCL'].iloc[-2]  # Lower channel
-            DCU_curr, DCU_prev = df['DCU'].iloc[-1], df['DCU'].iloc[-2]  # Upper channel
-            DCH_curr, DCH_prev = df['DCH'].iloc[-1], df['DCH'].iloc[-2]  # Highest channel
-            
-            close_curr, close_prev = df['close'].iloc[-1], df['close'].iloc[-2]
-            
-            # Close existing positions based on Donchian breakouts or profit management
+            close_curr = df['close'].iloc[-1]
+            close_prev = df['close'].iloc[-2]
+            dcl_curr = df['DC_Lower'].iloc[-1]
+            dcu_curr = df['DC_Upper'].iloc[-1]
+            dcm_curr = df['DC_Middle'].iloc[-1] # เส้นกลาง
+            rsi_curr = df['RSI'].iloc[-1]
+
+            # --- EXIT LOGIC ---
+            # ตรวจสอบตำแหน่งที่เปิดอยู่เพื่อปิด
             if len(positions) > 0:
                 for position in positions:
-                    profit = float(position.profit)
+                    is_buy = position.type == mt5.ORDER_TYPE_BUY
+                    is_sell = position.type == mt5.ORDER_TYPE_SELL
                     
-                    # Stop-loss: Close if profit drops below trigger
-                    if(profit < get_trigger_price() and get_trigger_price() > 0):
+                    # ✅ EXIT 1: Stop and Reverse (SAR) - ปิดเมื่อราคาทะลุช่องตรงข้าม (ทำหน้าที่เป็น SL)
+                    if is_buy and close_curr < dcl_curr:
                         trading_close(position, current_time)
-                    
-                    # Close BUY position when price breaks below lower channel
-                    elif (position.type == mt5.ORDER_TYPE_BUY and 
-                          close_curr < DCL_curr and close_prev >= DCL_prev and 
-                          current_time != get_last_order_time()):
-                        trading_close(position, current_time)
-                    
-                    # Close SELL position when price breaks above upper channel
-                    elif (position.type == mt5.ORDER_TYPE_SELL and 
-                          close_curr > DCU_curr and close_prev <= DCU_prev and 
-                          current_time != get_last_order_time()):
-                        trading_close(position, current_time)
-                    
-                    # Trailing profit management
-                    else:
-                        lots = float(lot_var.get()) * 100
-                        if profit > (get_trigger_price() + (2*lots)) and profit > (2*lots):
-                            trigger_profit = get_trigger_price() + (1*lots)
-                            set_trigger_price(trigger_profit)
-                            log_message(f"[DC] Trailing stop updated: {trigger_profit:.2f} USD", "blue")
-            
-            # Entry signals: Donchian breakout strategy (with RSI filter)
-            # BUY signal: Price breaks above upper channel (bullish breakout)
-            elif (close_curr > DCU_curr and close_prev <= DCU_prev and 
-                current_time != get_last_order_time() and df['RSI'].iloc[-1] < 70):
-                trading_buy(current_time)
-                log_message(f"[DC] BUY signal - breakout above upper channel at {close_curr:.5f} - RSI: {df['RSI'].iloc[-1]:.1f}", "green")
-            
-            # SELL signal: Price breaks below lower channel (bearish breakout)  
-            elif (close_curr < DCL_curr and close_prev >= DCL_prev and 
-                  current_time != get_last_order_time() and df['RSI'].iloc[-1] > 30):
-                trading_sell(current_time)
-                log_message(f"[DC] SELL signal - breakdown below lower channel at {close_curr:.5f} - RSI: {df['RSI'].iloc[-1]:.1f}", "red")
+                        log_message(f"[DC] 🔄 ปิด BUY: หลุดช่องล่าง | P/L: {position.profit:.2f}", "yellow")
+                        continue
 
+                    elif is_sell and close_curr > dcu_curr:
+                        trading_close(position, current_time)
+                        log_message(f"[DC] 🔄 ปิด SELL: หลุดช่องบน | P/L: {position.profit:.2f}", "yellow")
+                        continue
+
+                    # ✅ EXIT 2 (Optional): Take Profit / Trailing Stop ที่เส้นกลาง
+                    # หากมีกำไรและราคาย่อกลับมาที่เส้นกลาง ให้พิจารณาปิดทำกำไร
+                    if position.profit > 0:
+                        if is_buy and close_curr < dcm_curr:
+                            trading_close(position, current_time)
+                            log_message(f"[DC] ✅ TP BUY: เส้นกลาง | P/L: {position.profit:.2f}", "blue")
+                            continue
+                        
+                        elif is_sell and close_curr > dcm_curr:
+                            trading_close(position, current_time)
+                            log_message(f"[DC] ✅ TP SELL: เส้นกลาง | P/L: {position.profit:.2f}", "blue")
+                            continue
+
+            # --- ENTRY LOGIC ---
+            # เข้าออเดอร์เมื่อไม่มี Position ค้างอยู่
+            elif len(positions) == 0:
+                
+                # --- BUY CONDITIONS ---
+                # 1. ราคาเพิ่งทะลุช่องบน (Breakout)
+                # 2. RSI > 60 เพื่อยืนยัน Momentum ที่แข็งแกร่ง
+                is_buy_breakout = close_curr > dcu_curr and close_prev <= dcu_curr
+                
+                if is_buy_breakout and rsi_curr > 60 and current_time != get_last_order_time():
+                    trading_buy(current_time)
+                    log_message(f"[DC] ✅ BUY: Breakout ช่องบน RSI {rsi_curr:.1f}", "green")
+
+                # --- SELL CONDITIONS ---
+                # 1. ราคาเพิ่งทะลุช่องล่าง (Breakdown)
+                # 2. RSI < 40 เพื่อยืนยัน Momentum ที่แข็งแกร่ง
+                is_sell_breakout = close_curr < dcl_curr and close_prev >= dcl_curr
+                
+                if is_sell_breakout and rsi_curr < 40 and current_time != get_last_order_time():
+                    trading_sell(current_time)
+                    log_message(f"[DC] 🔻 SELL: Breakdown ช่องล่าง RSI {rsi_curr:.1f}", "red")
+         
         time.sleep(5)
 
 
@@ -1162,7 +1132,7 @@ def get_candlestick_data(symbol, timeframe, num_bars):
     }
     rates = mt5.copy_rates_from_pos(symbol, timeframeList[timeframe], 0, num_bars)
     if rates is None:
-        log_message(f"[ERROR] Unable to get candlestick data for {symbol}", "red")
+        log_message(f"❌ ไม่สามารถดึงข้อมูล {symbol}", "red")
         return []
     
     df = pd.DataFrame(rates)
@@ -1171,8 +1141,10 @@ def get_candlestick_data(symbol, timeframe, num_bars):
 
 
     # Bull Market Support Band
-    df['EMA21'] = ta.ema(df['close'], length=21)
-    df['SMA20'] = ta.sma(df['close'], length=20)
+    df['EMA_Fast'] = ta.ema(df['close'], length=21)     # เส้นบนของ Band
+    df['EMA_Slow'] = ta.ema(df['close'], length=55)     # เส้นล่างของ Band
+    df['EMA_Trend'] = ta.ema(df['close'], length=100)   # เส้นกรองแนวโน้มกระทิง (เร็วขึ้น)
+
 
     df['SMA'] = ta.sma(df['close'], length=5)
     df['EMA'] = ta.ema(df['close'], length=10)
@@ -1192,22 +1164,22 @@ def get_candlestick_data(symbol, timeframe, num_bars):
     df['MACD_Signal'] = df['MACD_Signal'].ffill().fillna(0)
 
     # Calculate Bollinger Bands
-    bbands = ta.bbands(df['close'], length=20, std=2)
-    df['BB_Middle'] = bbands['BBM_20_2.0_2.0']  # Middle Band (Simple Moving Average)
-    df['UpperBand'] = bbands['BBU_20_2.0_2.0']   # Upper Band
-    df['LowerBand'] = bbands['BBL_20_2.0_2.0']   # Lower Band
+    bbands = ta.bbands(df['close'], length=20, std=2.0)
+    df['BB_Lower'] = bbands['BBL_20_2.0_2.0']
+    df['BB_Middle'] = bbands['BBM_20_2.0_2.0']
+    df['BB_Upper'] = bbands['BBU_20_2.0_2.0']
 
     # Calculate Supertrend - Optimized for 5m timeframe
-    # Using length=10 and multiplier=2.5 for better sensitivity on 5min charts
+    # Using length=12 and multiplier=3 for better sensitivity on 5min charts
     supertrend_result = ta.supertrend(high=df['high'], low=df['low'], close=df['close'], 
-                                     length=10, multiplier=2.5)
-    df['Supertrend'] = supertrend_result['SUPERT_10_2.5']
-    df['Supertrend_Direction'] = supertrend_result['SUPERTd_10_2.5']
+                                     length=12, multiplier=3.0)
+    df['Supertrend'] = supertrend_result['SUPERT_12_3.0']
+    df['Supertrend_Direction'] = supertrend_result['SUPERTd_12_3.0']
     
     df['Buy_Signal'] = (df['close'] > df['SMA']) & (df['RSI'] < 30)
     df['Sell_Signal'] = (df['close'] < df['EMA']) & (df['RSI'] > 70)
 
-    donchian = ta.donchian(df['high'], df['low'], lower_length=20, upper_length=20)
+    donchian = ta.donchian(df['high'], df['low'], lower_length=25, upper_length=25)
     df[['DCL', 'DCU', 'DCH']] = donchian
     return df
     # poth graph into ax
@@ -1303,16 +1275,17 @@ def poth_graph(symbol, data, indicator):
         # Bull Market Support Band indicators
         if show_ema_sma.get():
             ap.extend([
-                mpf.make_addplot(data['SMA20'], ax=ax_price, color='#f97316', linestyle='-', width=1, alpha=0.8),
-                mpf.make_addplot(data['EMA21'], ax=ax_price, color='#ea580c', linestyle='-', width=1, alpha=0.8),
+                mpf.make_addplot(data['EMA_Slow'], ax=ax_price, color='#f97316', linestyle='-', width=1, alpha=0.8),
+                mpf.make_addplot(data['EMA_Fast'], ax=ax_price, color='#ea580c', linestyle='-', width=1, alpha=0.8),
+                mpf.make_addplot(data['EMA_Trend'], ax=ax_price, color='#fb923c', linestyle='--', width=0.8, alpha=0.6),
             ])
             
     elif indicator == "BOLLINGER":
         # Bollinger Bands indicators
         if show_bollinger.get():
             ap.extend([
-                mpf.make_addplot(data['UpperBand'], ax=ax_price, color='#f97316', linestyle='-', width=1, alpha=0.8),
-                mpf.make_addplot(data['LowerBand'], ax=ax_price, color='#f97316', linestyle='-', width=1, alpha=0.8),
+                mpf.make_addplot(data['BB_Upper'], ax=ax_price, color='#f97316', linestyle='-', width=1, alpha=0.8),
+                mpf.make_addplot(data['BB_Lower'], ax=ax_price, color='#f97316', linestyle='-', width=1, alpha=0.8),
                 mpf.make_addplot(data['BB_Middle'], ax=ax_price, color='#fb923c', linestyle='--', width=0.8, alpha=0.6),
             ])
             
@@ -1583,8 +1556,8 @@ root.grid_columnconfigure(2, weight=0)  # Right panel fixed
 # No need for manual geometry configuration since we're using full screen
 
 # Add welcome log message
-log_message(f"🎯 Welcome to MT5 Autobot V.{version}!", "blue")
-log_message("⚡ Ready for automated trading", "green")
+log_message(f"🎯 ยินดีต้อนรับสู่ MT5 Autobot V.{version}!", "blue")
+log_message("⚡ พร้อมเทรดอัตโนมัติ", "green")
 
 # Run the application
 root.mainloop()
