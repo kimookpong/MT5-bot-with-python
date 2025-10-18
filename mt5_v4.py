@@ -103,6 +103,11 @@ root = tk.Tk()
 root.title(f"MT5 Autobot V.{version}")
 root.state('zoomed')  # Full screen on Windows
 root.configure(bg='#f7fafc')  # Light gray-white background
+# Keep a sensible minimum window size so 250-65%-250 layout remains usable
+try:
+    root.minsize(1028, 650)
+except Exception:
+    pass
 
 # Set window icon (for title bar and taskbar)
 try:
@@ -171,10 +176,10 @@ style.configure('Connect.TButton',
 
 style.map('Connect.TButton',
           background=[('active', '#2c5aa0'),
-                     ('pressed', '#2a4d8a'),
-                     ('disabled', '#4a5568')],
+                      ('pressed', '#2a4d8a'),
+                      ('disabled', '#4a5568')],
           relief=[('active', 'flat'),
-                 ('pressed', 'flat')])
+                  ('pressed', 'flat')])
 
 style.configure('Start.TButton', 
                 font=('Segoe UI', 8, 'bold'), 
@@ -187,10 +192,10 @@ style.configure('Start.TButton',
 
 style.map('Start.TButton',
           background=[('active', '#2f855a'),
-                     ('pressed', '#276749'),
-                     ('disabled', '#4a5568')],
+                      ('pressed', '#276749'),
+                      ('disabled', '#4a5568')],
           relief=[('active', 'flat'),
-                 ('pressed', 'flat')])
+                  ('pressed', 'flat')])
 
 style.configure('Stop.TButton', 
                 font=('Segoe UI', 8, 'bold'), 
@@ -203,16 +208,51 @@ style.configure('Stop.TButton',
 
 style.map('Stop.TButton',
           background=[('active', '#c53030'),
-                     ('pressed', '#9c2626'),
-                     ('disabled', '#4a5568')],
+                      ('pressed', '#9c2626'),
+                      ('disabled', '#4a5568')],
           relief=[('active', 'flat'),
-                 ('pressed', 'flat')])
+                  ('pressed', 'flat')])
 
-# Modern frame styles
-style.configure('Modern.TFrame', 
+# ----------------------------------------------------
+# --- UI CHANGES START HERE ---
+# ----------------------------------------------------
+
+# (1) สไตล์สำหรับพื้นหลังหลักของแอป (สีเทาอ่อน)
+style.configure('Primary.TFrame', background=PRIMARY_BG)
+
+# (2) สไตล์สำหรับ Frame ที่อยู่ "ภายใน" การ์ด (สีขาว)
+style.configure('Card.TFrame', 
                 background=SECONDARY_BG, 
                 relief='flat', 
-                borderwidth=1)
+                borderwidth=0) # ใช้ 0 สำหรับ frame ภายใน
+
+# (3) สไตล์สำหรับ Card (พื้นหลังสีขาว, ขอบเทาอ่อน)
+style.configure('Card.TLabelframe',
+                background=SECONDARY_BG, # พื้นหลังสีขาว
+                borderwidth=1,
+                relief='solid',          # ขอบเรียบ
+                lightcolor='#e2e8f0',  # สีขอบเทาอ่อน
+                darkcolor='#e2e8f0')   # สีขอบเทาอ่อน
+
+style.configure('Card.TLabelframe.Label',
+                font=('Segoe UI', 9, 'bold'),
+                background=SECONDARY_BG, # พื้นหลังสีขาว
+                foreground='#2563eb',
+                padding=(8, 4))
+                
+# (4) ปรับ Checkbutton ให้ใช้พื้นหลังสีขาว
+style.configure('Modern.TCheckbutton',
+                font=('Segoe UI', 8),
+                background=SECONDARY_BG, # <-- สำคัญ: ใช้พื้นหลังสีขาว
+                foreground=TEXT_PRIMARY,
+                focuscolor='none',
+                relief='flat',
+                borderwidth=0)
+
+# (ลบสไตล์ 'Modern.TFrame' และ 'Card.TLabelframe' (แบบ raised) ของเก่า)
+# ----------------------------------------------------
+# --- UI CHANGES END HERE ---
+# ----------------------------------------------------
 
 style.configure('Card.TFrame',
                 background=ACCENT_BG,
@@ -231,11 +271,11 @@ style.configure('Modern.TEntry',
 
 style.map('Modern.TEntry',
           fieldbackground=[('focus', '#f1f5f9'),
-                          ('active', '#f1f5f9')],
+                           ('active', '#f1f5f9')],
           lightcolor=[('focus', ACCENT_BLUE),
-                     ('active', ACCENT_BLUE)],
+                      ('active', ACCENT_BLUE)],
           darkcolor=[('focus', ACCENT_BLUE),
-                    ('active', ACCENT_BLUE)])
+                     ('active', ACCENT_BLUE)])
 
 # Enhanced Combobox styles  
 style.configure('Modern.TCombobox',
@@ -249,11 +289,11 @@ style.configure('Modern.TCombobox',
 
 style.map('Modern.TCombobox',
           fieldbackground=[('focus', '#f1f5f9'),
-                          ('active', '#f1f5f9')],
+                           ('active', '#f1f5f9')],
           lightcolor=[('focus', ACCENT_BLUE),
-                     ('active', ACCENT_BLUE)],
+                      ('active', ACCENT_BLUE)],
           darkcolor=[('focus', ACCENT_BLUE),
-                    ('active', ACCENT_BLUE)])
+                     ('active', ACCENT_BLUE)])
 
 # Enhanced Profit/Loss styles
 style.configure('Profit.TLabel', 
@@ -281,252 +321,243 @@ style.configure('Modern.TLabelframe.Label',
                 background=SECONDARY_BG, 
                 foreground=ACCENT_BLUE)
 
-# Premium card style with modern aesthetics
-style.configure('Card.TLabelframe',
-                background='#ffffff',
-                borderwidth=2,
-                relief='raised',
-                lightcolor='#e2e8f0',
-                darkcolor='#cbd5e0')
-
-style.configure('Card.TLabelframe.Label',
-                font=('Segoe UI', 9, 'bold'),
-                background='#ffffff',
-                foreground='#2563eb',
-                padding=(8, 4))
-
-# Modern Checkbutton styles for indicator controls
-style.configure('Modern.TCheckbutton',
-                font=('Segoe UI', 8),
-                background=SECONDARY_BG,
-                foreground=TEXT_PRIMARY,
-                focuscolor='none',
-                relief='flat',
-                borderwidth=0)
-
 style.map('Modern.TCheckbutton',
           background=[('active', ACCENT_BG),
-                     ('selected', ACCENT_BG)],
+                      ('selected', ACCENT_BG)],
           foreground=[('active', ACCENT_BLUE),
-                     ('selected', ACCENT_BLUE)])
+                      ('selected', ACCENT_BLUE)])
 
 account = 194634703
 password = ""
 server = "Exness-MT5Real17"
 
-# Configure root grid for 3-column layout
-root.columnconfigure(0, weight=0, minsize=280)  # Left panel - controls
-root.columnconfigure(1, weight=1)  # Center panel - chart (expandable)
-root.columnconfigure(2, weight=0, minsize=300)  # Right panel - trading log
+# ═══════════════════════════════════════════════════════════════════════════════
+# MODERN RESPONSIVE LAYOUT - 3 Column Design
+# ═══════════════════════════════════════════════════════════════════════════════
+# Layout Distribution: Left(250px) + Center(~65% flexible) + Right(250px)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+root.columnconfigure(0, weight=0, minsize=250)  # Left: Control Panel (250px fixed)
+root.columnconfigure(1, weight=4)  # Center: Chart Area (weight=4 for maximum space)
+root.columnconfigure(2, weight=0, minsize=250)  # Right: Trading Log (250px fixed)
 root.rowconfigure(0, weight=1)
 
-# Create main frames with 3-column layout
-left_frame = ttk.Frame(root, style='Modern.TFrame', padding="10")
-left_frame.grid(row=0, column=0, padx=(8, 4), pady=8, sticky="nsew")
+# ----------------------------------------------------
+# --- UI CHANGES START HERE ---
+# ----------------------------------------------------
+# (5) เปลี่ยน Style ของ Frame หลักเป็น 'Primary.TFrame' (สีเทา)
+left_frame = ttk.Frame(root, style='Primary.TFrame', padding="8", width=250)
+left_frame.grid(row=0, column=0, padx=8, pady=8, sticky="nsew")
+left_frame.grid_propagate(False)  # Prevent frame from shrinking
 
-center_frame = ttk.Frame(root, style='Modern.TFrame', padding="8")
-center_frame.grid(row=0, column=1, padx=4, pady=8, sticky="nsew")
+center_frame = ttk.Frame(root, style='Primary.TFrame', padding="8")
+center_frame.grid(row=0, column=1, padx=8, pady=8, sticky="nsew")
 
-right_frame = ttk.Frame(root, style='Modern.TFrame', padding="10")
-right_frame.grid(row=0, column=2, padx=(4, 8), pady=8, sticky="nsew")
+right_frame = ttk.Frame(root, style='Primary.TFrame', padding="8", width=250)
+right_frame.grid(row=0, column=2, padx=8, pady=8, sticky="nsew")
+right_frame.grid_propagate(False)  # Prevent frame from shrinking
+# ----------------------------------------------------
+# --- UI CHANGES END HERE ---
+# ----------------------------------------------------
 
-# Connection Settings Section - Compact
-connection_frame = ttk.LabelFrame(left_frame, text="🔗 Connection", style='Modern.TLabelframe', padding="10")
-connection_frame.pack(fill="x", pady=(0, 10))
 
-# Account number
-ttk.Label(connection_frame, text="Account:", style='Info.TLabel').grid(row=0, column=0, sticky="w", pady=(0, 3))
-account_entry = ttk.Entry(connection_frame, width=28, font=('Segoe UI', 8), style='Modern.TEntry')
-account_entry.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 6))
+# ═══════════════════════════════════════════════════════════════════════════════
+# LEFT PANEL - Trading Controls & Settings
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Connection Section
+# --- ใช้ 'Card.TLabelframe' ---
+connection_frame = ttk.LabelFrame(left_frame, text="🔗 Connection", style='Card.TLabelframe', padding="8")
+connection_frame.pack(fill="x", pady=(0, 8))
+
+# Compact form layout
+ttk.Label(connection_frame, text="Account:", style='Info.TLabel').grid(row=0, column=0, sticky="w", pady=(0, 2))
+account_entry = ttk.Entry(connection_frame, font=('Segoe UI', 8), style='Modern.TEntry')
+account_entry.grid(row=1, column=0, sticky="ew", pady=(0, 4))
 account_entry.insert(0, account)
 
-# Password 
-ttk.Label(connection_frame, text="Password:", style='Info.TLabel').grid(row=2, column=0, sticky="w", pady=(0, 3))
-password_entry = ttk.Entry(connection_frame, show="*", width=28, font=('Segoe UI', 8), style='Modern.TEntry')
-password_entry.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(0, 6))
+ttk.Label(connection_frame, text="Password:", style='Info.TLabel').grid(row=2, column=0, sticky="w", pady=(0, 2))
+password_entry = ttk.Entry(connection_frame, show="*", font=('Segoe UI', 8), style='Modern.TEntry')
+password_entry.grid(row=3, column=0, sticky="ew", pady=(0, 4))
 password_entry.insert(0, password)
 
-# Server
-ttk.Label(connection_frame, text="Server:", style='Info.TLabel').grid(row=4, column=0, sticky="w", pady=(0, 3))
-server_entry = ttk.Entry(connection_frame, width=28, font=('Segoe UI', 8), style='Modern.TEntry')
-server_entry.grid(row=5, column=0, columnspan=2, sticky="ew", pady=(0, 8))
+ttk.Label(connection_frame, text="Server:", style='Info.TLabel').grid(row=4, column=0, sticky="w", pady=(0, 2))
+server_entry = ttk.Entry(connection_frame, font=('Segoe UI', 8), style='Modern.TEntry')
+server_entry.grid(row=5, column=0, sticky="ew", pady=(0, 6))
 server_entry.insert(0, server)
 
 # Connection buttons
-button_frame = ttk.Frame(connection_frame)
-button_frame.grid(row=6, column=0, columnspan=2, pady=(2, 0))
+# --- ใช้ 'Card.TFrame' ---
+btn_container = ttk.Frame(connection_frame, style='Card.TFrame')
+btn_container.grid(row=6, column=0, sticky="ew")
+btn_container.columnconfigure(0, weight=1)
+btn_container.columnconfigure(1, weight=1)
 
-connect_button = ttk.Button(button_frame, text="🔌 Connect", style='Connect.TButton', command=lambda: connect_to_mt5())
-connect_button.pack(side='left', padx=(0, 8))
+connect_button = ttk.Button(btn_container, text="🔌 Connect", style='Connect.TButton', command=lambda: connect_to_mt5())
+connect_button.grid(row=0, column=0, padx=(0, 4), sticky="ew")
 
-disconnect_button = ttk.Button(button_frame, text="🔌 Disconnect", style='Stop.TButton', state="disabled", command=lambda: disconnect_mt5())
-disconnect_button.pack(side='left')
+disconnect_button = ttk.Button(btn_container, text="✖ Disconnect", style='Stop.TButton', state="disabled", command=lambda: disconnect_mt5())
+disconnect_button.grid(row=0, column=1, sticky="ew")
 
-# Configure column weights for responsive design
 connection_frame.columnconfigure(0, weight=1)
 
+# Parameters Section
+# --- ใช้ 'Card.TLabelframe' ---
+param_frame = ttk.LabelFrame(left_frame, text="⚙️ Parameters", style='Card.TLabelframe', padding="8")
+param_frame.pack(fill="x", pady=(0, 8))
 
-# Trading Parameters Section - Compact
-param_frame = ttk.LabelFrame(left_frame, text="⚙️ Parameters", style='Modern.TLabelframe', padding="10")
-param_frame.pack(fill="x", pady=(0, 10))
-
-# Symbol and Interval in compact grid
-ttk.Label(param_frame, text="Symbol:", style='Info.TLabel').grid(row=0, column=0, sticky="w", pady=(0, 3))
+# 2-column layout for compact display
+ttk.Label(param_frame, text="Symbol:", style='Info.TLabel').grid(row=0, column=0, sticky="w", pady=(0, 2))
 symbol_var = tk.StringVar(value="XAUUSDm")
 symbol_dropdown = ttk.Combobox(param_frame, textvariable=symbol_var, 
-                              values=["XAUUSDm", "BTCUSDm"], state="disabled", 
-                              width=12, font=('Segoe UI', 8), style='Modern.TCombobox')
-symbol_dropdown.grid(row=1, column=0, sticky="ew", pady=(0, 6), padx=(0, 4))
+                               values=["XAUUSDm", "BTCUSDm"], state="disabled", 
+                               width=10, font=('Segoe UI', 8), style='Modern.TCombobox')
+symbol_dropdown.grid(row=1, column=0, sticky="ew", pady=(0, 4), padx=(0, 3))
 
-ttk.Label(param_frame, text="Interval:", style='Info.TLabel').grid(row=0, column=1, sticky="w", pady=(0, 3))
+ttk.Label(param_frame, text="Interval:", style='Info.TLabel').grid(row=0, column=1, sticky="w", pady=(0, 2))
 interval_var = tk.StringVar(value="5m")
 interval_dropdown = ttk.Combobox(param_frame, textvariable=interval_var, 
-                                values=["1m", "5m", "15m", "30m", "1h", "4h", "1d"], 
-                                state="disabled", width=12, font=('Segoe UI', 8), style='Modern.TCombobox')
-interval_dropdown.grid(row=1, column=1, sticky="ew", pady=(0, 6), padx=(4, 0))
+                                 values=["1m", "5m", "15m", "30m", "1h", "4h", "1d"], 
+                                 state="disabled", width=10, font=('Segoe UI', 8), style='Modern.TCombobox')
+interval_dropdown.grid(row=1, column=1, sticky="ew", pady=(0, 4), padx=(3, 0))
 
-# Risk Management in compact grid
-ttk.Label(param_frame, text="Lot Size:", style='Info.TLabel').grid(row=2, column=0, sticky="w", pady=(0, 3))
-lot_var = ttk.Entry(param_frame, width=12, font=('Segoe UI', 8), style='Modern.TEntry')
-lot_var.grid(row=3, column=0, sticky="ew", pady=(0, 6), padx=(0, 4))
+ttk.Label(param_frame, text="Lot Size:", style='Info.TLabel').grid(row=2, column=0, sticky="w", pady=(0, 2))
+lot_var = ttk.Entry(param_frame, width=10, font=('Segoe UI', 8), style='Modern.TEntry')
+lot_var.grid(row=3, column=0, sticky="ew", pady=(0, 4), padx=(0, 3))
 lot_var.insert(0, "0.01")
 lot_var.config(state="disabled")
 
-ttk.Label(param_frame, text="Trigger Price:", style='Info.TLabel').grid(row=2, column=1, sticky="w", pady=(0, 3))
-trigger_var = ttk.Entry(param_frame, width=12, font=('Segoe UI', 8), style='Modern.TEntry')
-trigger_var.grid(row=3, column=1, sticky="ew", pady=(0, 6), padx=(4, 0))
+ttk.Label(param_frame, text="Trigger:", style='Info.TLabel').grid(row=2, column=1, sticky="w", pady=(0, 2))
+trigger_var = ttk.Entry(param_frame, width=10, font=('Segoe UI', 8), style='Modern.TEntry')
+trigger_var.grid(row=3, column=1, sticky="ew", pady=(0, 4), padx=(3, 0))
 trigger_var.insert(0, 3)
 trigger_var.config(state="disabled")
 
-# Max Orders and Indicator in compact layout
-ttk.Label(param_frame, text="Max Orders:", style='Info.TLabel').grid(row=4, column=0, sticky="w", pady=(0, 3))
-max_order_var = ttk.Entry(param_frame, width=12, font=('Segoe UI', 8), style='Modern.TEntry')
-max_order_var.grid(row=5, column=0, sticky="ew", pady=(0, 6), padx=(0, 4))
+ttk.Label(param_frame, text="Max Orders:", style='Info.TLabel').grid(row=4, column=0, sticky="w", pady=(0, 2))
+max_order_var = ttk.Entry(param_frame, width=10, font=('Segoe UI', 8), style='Modern.TEntry')
+max_order_var.grid(row=5, column=0, sticky="ew", pady=(0, 4), padx=(0, 3))
 max_order_var.insert(0, "100")
 max_order_var.config(state="disabled")
 
-ttk.Label(param_frame, text="Indicator:", style='Info.TLabel').grid(row=4, column=1, sticky="w", pady=(0, 3))
+ttk.Label(param_frame, text="Indicator:", style='Info.TLabel').grid(row=4, column=1, sticky="w", pady=(0, 2))
 indicator_var = tk.StringVar(value="SUPERTREND")
 indicator_dropdown = ttk.Combobox(param_frame, textvariable=indicator_var, 
-                                 values=["BULLMARKET", "BOLLINGER", "SUPERTREND", "DONCHAIN"], 
-                                 state="disabled", width=12, font=('Segoe UI', 8), style='Modern.TCombobox')
-indicator_dropdown.grid(row=5, column=1, sticky="ew", pady=(0, 6), padx=(4, 0))
+                                  values=["BULLMARKET", "BOLLINGER", "SUPERTREND", "DONCHAIN"], 
+                                  state="disabled", width=10, font=('Segoe UI', 8), style='Modern.TCombobox')
+indicator_dropdown.grid(row=5, column=1, sticky="ew", pady=(0, 4), padx=(3, 0))
 
-# Configure column weights
 param_frame.columnconfigure(0, weight=1)
 param_frame.columnconfigure(1, weight=1)
 
-
-
-
-
-# Bot Control Section - Compact
-bot_control_frame = ttk.LabelFrame(left_frame, text="🤖 Control", style='Modern.TLabelframe', padding="8")
+# Bot Control Section
+# --- ใช้ 'Card.TLabelframe' ---
+bot_control_frame = ttk.LabelFrame(left_frame, text="🤖 Control", style='Card.TLabelframe', padding="8")
 bot_control_frame.pack(fill="x", pady=(0, 8))
 
-button_bot = ttk.Frame(bot_control_frame)
-button_bot.pack(fill="x")
+# --- ใช้ 'Card.TFrame' ---
+btn_control = ttk.Frame(bot_control_frame, style='Card.TFrame')
+btn_control.pack(fill="x")
+btn_control.columnconfigure(0, weight=1)
+btn_control.columnconfigure(1, weight=1)
 
-start_bot_button = ttk.Button(button_bot, text="🚀 Start", style='Start.TButton', state="disabled", command=lambda: start_bot())
-start_bot_button.pack(side='left', padx=(0, 4), fill="x", expand=True)
+start_bot_button = ttk.Button(btn_control, text="🚀 Start", style='Start.TButton', state="disabled", command=lambda: start_bot())
+start_bot_button.grid(row=0, column=0, padx=(0, 4), sticky="ew")
 
-pause_bot_button = ttk.Button(button_bot, text="⏸️ Pause", style='Stop.TButton', state="disabled", command=lambda: pause_bot())
-pause_bot_button.pack(side='right', fill="x", expand=True)
+pause_bot_button = ttk.Button(btn_control, text="⏸ Pause", style='Stop.TButton', state="disabled", command=lambda: pause_bot())
+pause_bot_button.grid(row=0, column=1, sticky="ew")
 
-# Account Information Section - Ultra Compact
-info_frame = ttk.LabelFrame(left_frame, text="💰 Info", style='Modern.TLabelframe', padding="8")
-info_frame.pack(fill="x")
+# Info Section
+# --- ใช้ 'Card.TLabelframe' ---
+info_frame = ttk.LabelFrame(left_frame, text="💰 Account Info", style='Card.TLabelframe', padding="8")
+info_frame.pack(fill="x", pady=(0, 8))
 
-# Balance info super compact
 usdt_balance_label = ttk.Label(info_frame, text="Balance: --", 
-                              style='Info.TLabel', font=('Arial', 8, 'bold'))
-usdt_balance_label.pack(anchor="w", pady=(0, 2))
+                               style='Info.TLabel', font=('Segoe UI', 8, 'bold'))
+usdt_balance_label.pack(anchor="w", pady=1)
 
-# Time and Period in one line each
 time_elapsed_label = ttk.Label(info_frame, text="Runtime: --", 
-                              style='Info.TLabel', font=('Arial', 7))
-time_elapsed_label.pack(anchor="w", pady=(0, 2))
+                               style='Info.TLabel', font=('Segoe UI', 7))
+time_elapsed_label.pack(anchor="w", pady=1)
 
 period_count_label = ttk.Label(info_frame, text="Periods: --", 
-                              style='Info.TLabel', font=('Arial', 7))
-period_count_label.pack(anchor="w")
+                               style='Info.TLabel', font=('Segoe UI', 7))
+period_count_label.pack(anchor="w", pady=1)
 
-# Contact Information Section - Ultra Compact
-contact_frame = ttk.LabelFrame(left_frame, text="📞 Contact", style='Modern.TLabelframe', padding="6")
-contact_frame.pack(fill="x", pady=(8, 0))
+# Contact Section
+# --- ใช้ 'Card.TLabelframe' ---
+contact_frame = ttk.LabelFrame(left_frame, text="📞 Contact", style='Card.TLabelframe', padding="6")
+contact_frame.pack(fill="x", side="bottom")
 
-# Creator info
-creator_label = ttk.Label(contact_frame, text="Created by: kimookpong", 
-                         style='Info.TLabel', font=('Arial', 7, 'bold'))
-creator_label.pack(anchor="w", pady=(0, 1))
+ttk.Label(contact_frame, text="Created by: kimookpong", 
+          style='Info.TLabel', font=('Segoe UI', 7, 'bold')).pack(anchor="w")
+ttk.Label(contact_frame, text=f"Version: {version}", 
+          style='Info.TLabel', font=('Segoe UI', 7)).pack(anchor="w")
+ttk.Label(contact_frame, text="kimookpong@gmail.com", 
+          style='Info.TLabel', font=('Segoe UI', 7)).pack(anchor="w")
 
-# Version info
-version_label = ttk.Label(contact_frame, text=f"Current version: {version}", 
-                         style='Info.TLabel', font=('Arial', 7))
-version_label.pack(anchor="w", pady=(0, 1))
+# ═══════════════════════════════════════════════════════════════════════════════
+# CENTER PANEL - Trading Dashboard & Chart
+# ═══════════════════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════════
+# CENTER PANEL - Trading Dashboard & Chart
+# ═══════════════════════════════════════════════════════════════════════════════
 
-# Email info
-email_label = ttk.Label(contact_frame, text="Email: kimookpong@gmail.com", 
-                       style='Info.TLabel', font=('Arial', 7))
-email_label.pack(anchor="w")
-
-
-# Center Frame: Trading Dashboard with Chart
+# Dashboard Header
 dashboard_title = ttk.Label(center_frame, text="📈 Trading Dashboard", 
-                           font=('Segoe UI', 14, 'bold'), style='Title.TLabel')
-dashboard_title.pack(pady=(0, 8))
+                            font=('Segoe UI', 13, 'bold'), style='Title.TLabel')
+dashboard_title.pack(pady=(0, 6))
 
-# Enhanced Trading Status Dashboard
-status_frame = ttk.Frame(center_frame, style='Modern.TFrame')
-status_frame.pack(fill="x", padx=8, pady=(0, 16))
+# ----------------------------------------------------
+# --- UI CHANGES START HERE ---
+# ----------------------------------------------------
+# Status Cards Container
+# (6) เปลี่ยน Style ของ 'status_frame' เป็น 'Primary.TFrame' (สีเทา)
+status_frame = ttk.Frame(center_frame, style='Primary.TFrame')
+# Remove extra horizontal padding to give more space to the chart area
+status_frame.pack(fill="x", padx=0, pady=(0, 8))
+# ----------------------------------------------------
+# --- UI CHANGES END HERE ---
+# ----------------------------------------------------
 
-# Configure grid columns with improved spacing
 for i in range(4):
-    status_frame.columnconfigure(i, weight=1, minsize=160)
+    status_frame.columnconfigure(i, weight=1)
 
-# Modern Period Card with enhanced styling
-period_card = ttk.LabelFrame(status_frame, text="Current Period", style='Card.TLabelframe', padding="10")
-period_card.grid(row=0, column=0, padx=(0, 6), pady=0, sticky="ew")
-
-period_icon = ttk.Label(period_card, text="📅", font=('Segoe UI', 18), background='white')
-period_icon.pack(pady=(0, 6))
-trend_label = ttk.Label(period_card, text="--:--", style='Status.TLabel', font=('Segoe UI', 11, 'bold'))
+# Status Cards - Compact Design
+period_card = ttk.LabelFrame(status_frame, text="Current Period", style='Card.TLabelframe', padding="6")
+period_card.grid(row=0, column=0, padx=(0, 4), sticky="ew")
+ttk.Label(period_card, text="📅", font=('Segoe UI', 14), background='white').pack()
+trend_label = ttk.Label(period_card, text="--:--", style='Status.TLabel', font=('Segoe UI', 9, 'bold'))
 trend_label.pack()
 
-# Enhanced Price Card with dynamic styling
-price_card = ttk.LabelFrame(status_frame, text="Market Price", style='Card.TLabelframe', padding="10")
-price_card.grid(row=0, column=1, padx=6, pady=0, sticky="ew")
-
-price_icon = ttk.Label(price_card, text="💰", font=('Segoe UI', 18), background='white')
-price_icon.pack(pady=(0, 6))
-current_price_label = ttk.Label(price_card, text="0.00 USD", style='Status.TLabel', font=('Segoe UI', 11, 'bold'))
+price_card = ttk.LabelFrame(status_frame, text="Market Price", style='Card.TLabelframe', padding="6")
+price_card.grid(row=0, column=1, padx=2, sticky="ew")
+ttk.Label(price_card, text="💰", font=('Segoe UI', 14), background='white').pack()
+current_price_label = ttk.Label(price_card, text="0.00", style='Status.TLabel', font=('Segoe UI', 9, 'bold'))
 current_price_label.pack()
 
-# Professional Orders Card
-pending_card = ttk.LabelFrame(status_frame, text="Active Orders", style='Card.TLabelframe', padding="10")
-pending_card.grid(row=0, column=2, padx=6, pady=0, sticky="ew")
-
-orders_icon = ttk.Label(pending_card, text="📋", font=('Segoe UI', 18), background='white')
-orders_icon.pack(pady=(0, 6))
-process_order_label = ttk.Label(pending_card, text="0 (0.00)", style='Status.TLabel', font=('Segoe UI', 11, 'bold'))
+orders_card = ttk.LabelFrame(status_frame, text="Active Orders", style='Card.TLabelframe', padding="6")
+orders_card.grid(row=0, column=2, padx=2, sticky="ew")
+ttk.Label(orders_card, text="📋", font=('Segoe UI', 14), background='white').pack()
+process_order_label = ttk.Label(orders_card, text="0 (0.00)", style='Status.TLabel', font=('Segoe UI', 9, 'bold'))
 process_order_label.pack()
 
-# Premium P/L Card with trend indicators
-profit_card = ttk.LabelFrame(status_frame, text="Total P/L", style='Card.TLabelframe', padding="10")
-profit_card.grid(row=0, column=3, padx=6, pady=0, sticky="ew")
-
-pnl_icon = ttk.Label(profit_card, text="📈", font=('Segoe UI', 18), background='white')
-pnl_icon.pack(pady=(0, 6))
-trading_completed_label = ttk.Label(profit_card, text="0.00 USD", style='Status.TLabel', font=('Segoe UI', 11, 'bold'))
+profit_card = ttk.LabelFrame(status_frame, text="Total P/L", style='Card.TLabelframe', padding="6")
+profit_card.grid(row=0, column=3, padx=(4, 0), sticky="ew")
+ttk.Label(profit_card, text="📈", font=('Segoe UI', 14), background='white').pack()
+trading_completed_label = ttk.Label(profit_card, text="0.00", style='Status.TLabel', font=('Segoe UI', 9, 'bold'))
 trading_completed_label.pack()
 
-# Chart Section in Center Frame - Full size
-chart_frame = ttk.LabelFrame(center_frame, text="Price Chart", style='Card.TLabelframe', padding="8")
-chart_frame.pack(fill="both", expand=True)
 
-# Indicator Controls Section - Above the chart
-indicator_controls_frame = ttk.Frame(chart_frame, style='Modern.TFrame')
-indicator_controls_frame.pack(fill="x", padx=5, pady=(0, 8))
+# ----------------------------------------------------
+# --- UI CHANGES START HERE ---
+# ----------------------------------------------------
+# (7) ย้าย Indicator Controls ออกมาเป็นการ์ดใหม่
+indicator_controls_section = ttk.LabelFrame(center_frame, text="📊 Toggles", style='Card.TLabelframe', padding="8")
+indicator_controls_section.pack(fill="x", pady=(0, 8))
+# ----------------------------------------------------
+# --- UI CHANGES END HERE ---
+# ----------------------------------------------------
+
 
 # Create checkbox variables for each indicator
 show_supertrend = tk.BooleanVar(value=True)
@@ -536,35 +567,45 @@ show_donchian = tk.BooleanVar(value=True)
 show_rsi = tk.BooleanVar(value=False)
 show_macd = tk.BooleanVar(value=False)
 
-# Title for indicator controls
-# ttk.Label(indicator_controls_frame, text="📊 Chart Indicators:", 
-#          font=('Segoe UI', 9, 'bold'), style='Header.TLabel').pack(side="left", padx=(5, 15))
-
 # Create checkboxes in a horizontal layout
-checkbox_frame = ttk.Frame(indicator_controls_frame, style='Modern.TFrame')
+# ----------------------------------------------------
+# --- UI CHANGES START HERE ---
+# ----------------------------------------------------
+# (8) เปลี่ยน parent เป็น 'indicator_controls_section' และ style เป็น 'Card.TFrame' (สีขาว)
+checkbox_frame = ttk.Frame(indicator_controls_section, style='Card.TFrame')
 checkbox_frame.pack(side="left", fill="x", expand=True)
 
 # Row 1: Primary indicators
-row1_frame = ttk.Frame(checkbox_frame, style='Modern.TFrame')
+row1_frame = ttk.Frame(checkbox_frame, style='Card.TFrame')
 row1_frame.pack(fill="x", pady=(0, 3))
+# ----------------------------------------------------
+# --- UI CHANGES END HERE ---
+# ----------------------------------------------------
 
 ttk.Checkbutton(row1_frame, text="🔄 Supertrend", variable=show_supertrend,
-               style='Modern.TCheckbutton').pack(side="left", padx=(0, 15))
+                style='Modern.TCheckbutton').pack(side="left", padx=(0, 15))
 ttk.Checkbutton(row1_frame, text="📈 Bollinger Bands", variable=show_bollinger,
-               style='Modern.TCheckbutton').pack(side="left", padx=(0, 15))
+                style='Modern.TCheckbutton').pack(side="left", padx=(0, 15))
 ttk.Checkbutton(row1_frame, text="📊 EMA/SMA", variable=show_ema_sma,
-               style='Modern.TCheckbutton').pack(side="left", padx=(0, 15))
+                style='Modern.TCheckbutton').pack(side="left", padx=(0, 15))
 
 # Row 2: Secondary indicators  
-row2_frame = ttk.Frame(checkbox_frame, style='Modern.TFrame')
+# ----------------------------------------------------
+# --- UI CHANGES START HERE ---
+# ----------------------------------------------------
+# (9) เปลี่ยน style เป็น 'Card.TFrame' (สีขาว)
+row2_frame = ttk.Frame(checkbox_frame, style='Card.TFrame')
 row2_frame.pack(fill="x")
+# ----------------------------------------------------
+# --- UI CHANGES END HERE ---
+# ----------------------------------------------------
 
 ttk.Checkbutton(row2_frame, text="📦 Donchian", variable=show_donchian,
-               style='Modern.TCheckbutton').pack(side="left", padx=(0, 15))
+                style='Modern.TCheckbutton').pack(side="left", padx=(0, 15))
 ttk.Checkbutton(row2_frame, text="⚡ RSI", variable=show_rsi,
-               style='Modern.TCheckbutton').pack(side="left", padx=(0, 15))
+                style='Modern.TCheckbutton').pack(side="left", padx=(0, 15))
 ttk.Checkbutton(row2_frame, text="📶 MACD", variable=show_macd,
-               style='Modern.TCheckbutton').pack(side="left")
+                style='Modern.TCheckbutton').pack(side="left")
 
 # Add callback to refresh chart when indicators are toggled
 def refresh_chart():
@@ -594,6 +635,21 @@ show_donchian.trace_add('write', lambda *args: refresh_chart())
 show_rsi.trace_add('write', lambda *args: refresh_chart())
 show_macd.trace_add('write', lambda *args: refresh_chart())
 
+
+# Chart Frame
+# ----------------------------------------------------
+# --- UI CHANGES START HERE ---
+# ----------------------------------------------------
+# (10) 'chart_frame' ตอนนี้อยู่ใต้ 'indicator_controls_section'
+chart_frame = ttk.LabelFrame(center_frame, text="📊 Price Chart", style='Card.TLabelframe', padding="4")
+chart_frame.pack(fill="both", expand=True)
+
+# (11) ลบ 'indicator_controls_frame' ออกจากภายใน 'chart_frame'
+# ----------------------------------------------------
+# --- UI CHANGES END HERE ---
+# ----------------------------------------------------
+
+
 # Configure matplotlib for full screen display - Single chart approach
 fig = Figure(figsize=(12, 6), facecolor='#f7fafc', dpi=100)
 fig.subplots_adjust(left=0.02, right=0.98, top=0.95, bottom=0.15)
@@ -617,16 +673,21 @@ ax_macd = None
 canvas = FigureCanvasTkAgg(fig, master=chart_frame)
 canvas.get_tk_widget().pack(fill="both", expand=True)
 
-# Right Frame: Trading Log Section
-log_frame = ttk.LabelFrame(right_frame, text="📝 Trading Log", style='Card.TLabelframe', padding="8")
+# ═══════════════════════════════════════════════════════════════════════════════
+# RIGHT PANEL - Trading Log
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# --- ใช้ 'Card.TLabelframe' ---
+log_frame = ttk.LabelFrame(right_frame, text="📝 Trading Log", style='Card.TLabelframe', padding="6")
 log_frame.pack(fill="both", expand=True)
 
-# Create scrollable text area
-log_scroll_frame = ttk.Frame(log_frame)
+# Scrollable log area
+# --- ใช้ 'Card.TFrame' ---
+log_scroll_frame = ttk.Frame(log_frame, style='Card.TFrame')
 log_scroll_frame.pack(fill="both", expand=True)
 
-# Text widget with modern light theme
-log_text = tk.Text(log_scroll_frame, height=25, wrap="word", 
+# Log text widget - flexible height
+log_text = tk.Text(log_scroll_frame, wrap="word", 
                    font=("Consolas", 8), bg='#ffffff', fg='#1a202c',
                    selectbackground='#4299e1', selectforeground='white',
                    borderwidth=0, relief='flat', insertbackground='#1a202c')
@@ -1166,7 +1227,7 @@ def run_trading_bot():
                         log_message(f"[ST] 🔻 SELL: ST พลิกลง RSI {rsi_curr:.1f}", "red")
                         # บันทึกจุด Sell สำหรับแสดงบนกราฟ (ใช้ index จาก dataframe)
                         sell_signals.append({'time': df.index[-1], 'price': close_price})
-                        # mt5.modify_position(ticket, sl=supertrend_val)                    
+                        # mt5.modify_position(ticket, sl=supertrend_val)                      
                         
             elif indicator == "DONCHAIN":
                 # Donchian Channels Strategy (DCL=Lower, DCU=Upper, DCH=Highest)
@@ -1260,8 +1321,8 @@ def get_candlestick_data(symbol, timeframe, num_bars):
 
 
     # Bull Market Support Band
-    df['EMA_Fast'] = ta.ema(df['close'], length=21)     # เส้นบนของ Band
-    df['EMA_Slow'] = ta.ema(df['close'], length=55)     # เส้นล่างของ Band
+    df['EMA_Fast'] = ta.ema(df['close'], length=21)    # เส้นบนของ Band
+    df['EMA_Slow'] = ta.ema(df['close'], length=55)    # เส้นล่างของ Band
     df['EMA_Trend'] = ta.ema(df['close'], length=100)   # เส้นกรองแนวโน้มกระทิง (เร็วขึ้น)
 
 
@@ -1291,7 +1352,7 @@ def get_candlestick_data(symbol, timeframe, num_bars):
     # Calculate Supertrend - Optimized for 5m timeframe
     # Using length=12 and multiplier=3 for better sensitivity on 5min charts
     supertrend_result = ta.supertrend(high=df['high'], low=df['low'], close=df['close'], 
-                                     length=12, multiplier=3.0)
+                                      length=12, multiplier=3.0)
     df['Supertrend'] = supertrend_result['SUPERT_12_3.0']
     df['Supertrend_Direction'] = supertrend_result['SUPERTd_12_3.0']
     
@@ -1317,7 +1378,7 @@ def get_candlestick_data(symbol, timeframe, num_bars):
     return df
     # poth graph into ax
     
-   
+    
 def poth_graph(symbol, data, indicator):
     global ax, ax_price, ax_rsi, ax_macd
     
@@ -1384,7 +1445,7 @@ def poth_graph(symbol, data, indicator):
         gridstyle='-',
         rc={'font.size': 9, 'axes.edgecolor': '#e2e8f0', 'axes.linewidth': 1.2}
     )
-   
+    
     # Initialize ap list for price chart addplots based on checkbox selections
     ap = []
     
@@ -1402,7 +1463,7 @@ def poth_graph(symbol, data, indicator):
             mpf.make_addplot(data['EMA'], ax=ax_price, color='#9333ea', linestyle='-', width=0.8, alpha=0.8),
             mpf.make_addplot(data['SMA'], ax=ax_price, color='#f59e0b', linestyle='-', width=0.8, alpha=0.8),
         ])
- 
+
     # Add strategy-specific indicators based on selected trading strategy
     if indicator == "BULLMARKET":
         # Bull Market Support Band indicators
@@ -1460,7 +1521,7 @@ def poth_graph(symbol, data, indicator):
                 
                 if buy_marker.notna().any():
                     ap.append(mpf.make_addplot(buy_marker, ax=ax_price, type='scatter', 
-                                               marker='^', markersize=200, color='lime', edgecolors='darkgreen', linewidths=2))
+                                              marker='^', markersize=200, color='lime', edgecolors='darkgreen', linewidths=2))
             
             if len(sell_signals) > 0:
                 sell_times = [s['time'] for s in sell_signals[-50:]]
@@ -1479,7 +1540,7 @@ def poth_graph(symbol, data, indicator):
                 
                 if sell_marker.notna().any():
                     ap.append(mpf.make_addplot(sell_marker, ax=ax_price, type='scatter', 
-                                               marker='v', markersize=200, color='red', edgecolors='darkred', linewidths=2))
+                                              marker='v', markersize=200, color='red', edgecolors='darkred', linewidths=2))
             
     elif indicator == "DONCHAIN":
         # Enhanced Donchian Channels visualization - More prominent when selected
@@ -1539,9 +1600,9 @@ def poth_graph(symbol, data, indicator):
                 valid_mask = data['RSI'].notna()
                 if valid_mask.any():
                     ax_rsi.fill_between(data.index[valid_mask], data['RSI'][valid_mask], 70, 
-                                       where=(data['RSI'][valid_mask] > 70), color='#ef4444', alpha=0.4, interpolate=True)
+                                        where=(data['RSI'][valid_mask] > 70), color='#ef4444', alpha=0.4, interpolate=True)
                     ax_rsi.fill_between(data.index[valid_mask], data['RSI'][valid_mask], 30, 
-                                       where=(data['RSI'][valid_mask] < 30), color='#22c55e', alpha=0.4, interpolate=True)
+                                        where=(data['RSI'][valid_mask] < 30), color='#22c55e', alpha=0.4, interpolate=True)
             else:
                 # Plot a default line if no RSI data
                 ax_rsi.plot(data.index, [50] * len(data), color='#8b5cf6', linewidth=0.8, alpha=0.5, linestyle='--', label='RSI (No Data)')
@@ -1550,7 +1611,7 @@ def poth_graph(symbol, data, indicator):
             # Reference lines
             ax_rsi.axhline(y=70, color='#ef4444', linestyle='--', alpha=0.8, linewidth=1.2)
             ax_rsi.axhline(y=30, color='#22c55e', linestyle='--', alpha=0.8, linewidth=1.2)
-            ax_rsi.axhline(y=50, color='#6b7280', linestyle='-', alpha=0.6, linewidth=1)
+            ax_rsi.axhline(y=50, color='#6b7200', linestyle='-', alpha=0.6, linewidth=1)
             
             ax_rsi.set_ylabel('RSI', fontsize=10, color='#4a5568', weight='bold')
             ax_rsi.set_ylim(0, 100)
@@ -1569,18 +1630,18 @@ def poth_graph(symbol, data, indicator):
                 current_rsi = data['RSI'].iloc[-1]
                 rsi_color = '#ef4444' if current_rsi > 70 else '#22c55e' if current_rsi < 30 else '#8b5cf6'
                 ax_rsi.text(0.02, 0.92, f'RSI: {current_rsi:.1f}', transform=ax_rsi.transAxes, 
-                           fontsize=9, weight='bold', color=rsi_color, 
-                           bbox=dict(boxstyle='round,pad=0.4', facecolor='white', alpha=0.9, edgecolor=rsi_color))
+                            fontsize=9, weight='bold', color=rsi_color, 
+                            bbox=dict(boxstyle='round,pad=0.4', facecolor='white', alpha=0.9, edgecolor=rsi_color))
             else:
                 ax_rsi.text(0.02, 0.92, 'RSI: No Data', transform=ax_rsi.transAxes, 
-                           fontsize=9, weight='bold', color='#6b7280', 
-                           bbox=dict(boxstyle='round,pad=0.4', facecolor='white', alpha=0.9, edgecolor='#6b7280'))
+                            fontsize=9, weight='bold', color='#6b7200', 
+                            bbox=dict(boxstyle='round,pad=0.4', facecolor='white', alpha=0.9, edgecolor='#6b7200'))
             
             # Add level labels
             ax_rsi.text(0.98, 0.85, '70', transform=ax_rsi.transAxes, fontsize=7, 
-                       color='#ef4444', weight='bold', ha='right')
+                        color='#ef4444', weight='bold', ha='right')
             ax_rsi.text(0.98, 0.15, '30', transform=ax_rsi.transAxes, fontsize=7, 
-                       color='#22c55e', weight='bold', ha='right')
+                        color='#22c55e', weight='bold', ha='right')
         except Exception as e:
             print(f"RSI plotting error: {e}")
     
@@ -1621,10 +1682,10 @@ def poth_graph(symbol, data, indicator):
                     
                     if positive_mask.any():
                         ax_macd.bar(valid_hist.index[positive_mask], valid_hist.values[positive_mask], 
-                                   color='#22c55e', alpha=0.6, width=bar_width, label='Positive Hist')
+                                    color='#22c55e', alpha=0.6, width=bar_width, label='Positive Hist')
                     if negative_mask.any():
                         ax_macd.bar(valid_hist.index[negative_mask], valid_hist.values[negative_mask], 
-                                   color='#ef4444', alpha=0.6, width=bar_width, label='Negative Hist')
+                                    color='#ef4444', alpha=0.6, width=bar_width, label='Negative Hist')
             else:
                 # Plot default lines if no MACD data
                 ax_macd.plot(data.index, [0] * len(data), color='#0ea5e9', linewidth=1, alpha=0.5, linestyle='--', label='MACD (No Data)')
@@ -1632,7 +1693,7 @@ def poth_graph(symbol, data, indicator):
                 print("Warning: No valid MACD data found")
             
             # Zero line
-            ax_macd.axhline(y=0, color='#6b7280', linestyle='-', alpha=0.8, linewidth=1.2)
+            ax_macd.axhline(y=0, color='#6b7200', linestyle='-', alpha=0.8, linewidth=1.2)
             
             ax_macd.set_ylabel('MACD', fontsize=10, color='#4a5568', weight='bold')
             ax_macd.tick_params(axis='x', labelsize=8, colors='#4a5568', rotation=0)
@@ -1656,16 +1717,16 @@ def poth_graph(symbol, data, indicator):
                 # Value display with multiple lines
                 value_text = f'MACD: {current_macd:.3f}\nSignal: {current_signal:.3f}\nHist: {current_hist:.3f}'
                 ax_macd.text(0.02, 0.92, value_text, transform=ax_macd.transAxes, 
-                            fontsize=8, weight='bold', color=macd_color,
-                            bbox=dict(boxstyle='round,pad=0.4', facecolor='white', alpha=0.9, edgecolor=macd_color),
-                            verticalalignment='top')
+                             fontsize=8, weight='bold', color=macd_color,
+                             bbox=dict(boxstyle='round,pad=0.4', facecolor='white', alpha=0.9, edgecolor=macd_color),
+                             verticalalignment='top')
             else:
                 # Show "No Data" message
                 ax_macd.text(0.02, 0.92, 'MACD: No Data\nSignal: No Data\nHist: No Data', 
-                            transform=ax_macd.transAxes, 
-                            fontsize=8, weight='bold', color='#6b7280',
-                            bbox=dict(boxstyle='round,pad=0.4', facecolor='white', alpha=0.9, edgecolor='#6b7280'),
-                            verticalalignment='top')
+                             transform=ax_macd.transAxes, 
+                             fontsize=8, weight='bold', color='#6b7200',
+                             bbox=dict(boxstyle='round,pad=0.4', facecolor='white', alpha=0.9, edgecolor='#6b7200'),
+                             verticalalignment='top')
             
             # Add legend for better understanding
             ax_macd.legend(loc='upper right', fontsize=7, framealpha=0.9)
@@ -1677,17 +1738,17 @@ def poth_graph(symbol, data, indicator):
         
     # Current price line - More prominent
     ax_price.axhline(y=data['close'].iloc[-1], color='#2563eb', linestyle='-', 
-               label='Latest Price', linewidth=1, alpha=0.8)
+                     label='Latest Price', linewidth=1, alpha=0.8)
     
     # Position lines - More visible
     positions=mt5.positions_get(symbol=symbol)
     for position in positions:
         if position.type == mt5.ORDER_TYPE_BUY:
             ax_price.axhline(y=position.price_open, color='#00cc00', linestyle='-', 
-                      label='Buy Order', linewidth=1, alpha=0.8)
+                           label='Buy Order', linewidth=1, alpha=0.8)
         elif position.type == mt5.ORDER_TYPE_SELL:
             ax_price.axhline(y=position.price_open, color='#cc0000', linestyle='-', 
-                      label='Sell Order', linewidth=1, alpha=0.8)
+                           label='Sell Order', linewidth=1, alpha=0.8)
     
     # Add indicator status text in top-right corner of price chart
     active_indicators = []
@@ -1707,9 +1768,9 @@ def poth_graph(symbol, data, indicator):
     if active_indicators:
         indicator_text = "[CHART] " + " | ".join(active_indicators)
         ax_price.text(0.99, 0.97, indicator_text, transform=ax_price.transAxes, 
-               fontsize=8, weight='bold', color='#4a5568',
-               ha='right', va='top', 
-               bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8, edgecolor='#e2e8f0'))
+                      fontsize=8, weight='bold', color='#4a5568',
+                      ha='right', va='top', 
+                      bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8, edgecolor='#e2e8f0'))
     
     # Refresh canvas
     canvas.draw()
