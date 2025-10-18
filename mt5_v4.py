@@ -860,14 +860,7 @@ def trading_close(position,current_time):
             # รีเซ็ต trigger_profit เมื่อปิดออเดอร์
             set_trigger_profit(0)
             # ป้องกันการเปิดออเดอร์ใหม่ในช่วงเวลาเดียวกัน
-            try:
-                set_last_order_time(current_time)
-            except Exception:
-                # in rare cases current_time may be None; ignore
-                pass
-            # ให้เวลา MT5 อัพเดต positions ก่อนจะประเมินสัญญาณใหม่
-            time.sleep(1)
-
+    
             max_order = max_order_var.get()
             if get_stat("order") >= int(max_order):
                 log_message(f"🛑 ถึงจำนวนออเดอร์สูงสุด หยุดบอท!", "blue")
