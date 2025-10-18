@@ -1,204 +1,390 @@
-# 🤖 MT5 Autobot v4.3 (ภาษาไทย)# 🤖 MT5 Autobot v4.3# MT5 Autobot v4.2 🤖💰# MT5 Trading Bot v4.1
+# 🤖 MT5 Autobot v4.3# 🤖 MT5 Autobot v4.3 (ภาษาไทย)# 🤖 MT5 Autobot v4.3# MT5 Autobot v4.2 🤖💰# MT5 Trading Bot v4.1
 
-บอทเทรดอัตโนมัติสำหรับ MetaTrader 5 (MT5) พร้อม UI ทันสมัย กลยุทธ์ให้เลือกหลายแบบ และระบบจัดการความเสี่ยงครบถ้วน**MT5 Automated Trading Bot with Advanced Technical Indicators\*\***Automated Trading Bot for MetaTrader 5\*\* with Advanced Technical Analysis and Risk Management🤖 Advanced MetaTrader 5 Automated Trading Bot with Supertrend Strategy and Real-time GUI Dashboard
+> บอทเทรดอัตโนมัติสำหรับ MetaTrader 5 พร้อมกลยุทธ์หลากหลาย และระบบป้องกันความเสี่ยงแบบครบวงจรบอทเทรดอัตโนมัติสำหรับ MetaTrader 5 (MT5) พร้อม UI ทันสมัย กลยุทธ์ให้เลือกหลายแบบ และระบบจัดการความเสี่ยงครบถ้วน**MT5 Automated Trading Bot with Advanced Technical Indicators\*\***Automated Trading Bot for MetaTrader 5\*\* with Advanced Technical Analysis and Risk Management🤖 Advanced MetaTrader 5 Automated Trading Bot with Supertrend Strategy and Real-time GUI Dashboard
 
-![Python](https://img.shields.io/badge/python-3.8%2B-blue)A professional automated trading system for MetaTrader 5 (MT5) with multiple technical indicators, risk management features, and real-time monitoring dashboard.Created by: **kimookpong** ![Python](https://img.shields.io/badge/python-v3.8+-blue.svg)
+![Python](https://img.shields.io/badge/python-3.8+-blue) ![MT5](https://img.shields.io/badge/MetaTrader-5-green) ![License](https://img.shields.io/badge/license-MIT-orange)![Python](https://img.shields.io/badge/python-3.8%2B-blue)A professional automated trading system for MetaTrader 5 (MT5) with multiple technical indicators, risk management features, and real-time monitoring dashboard.Created by: **kimookpong** ![Python](https://img.shields.io/badge/python-v3.8+-blue.svg)
 
-![MetaTrader5](https://img.shields.io/badge/MetaTrader-5-green)
+---![MetaTrader5](https://img.shields.io/badge/MetaTrader-5-green)
 
-![License](https://img.shields.io/badge/license-MIT-orange)![Python](https://img.shields.io/badge/python-3.8+-blue.svg)Email: kimookpong@gmail.com ![License](https://img.shields.io/badge/license-MIT-green.svg)
+## 📚 สารบัญ![License](https://img.shields.io/badge/license-MIT-orange)![Python](https://img.shields.io/badge/python-3.8+-blue.svg)Email: kimookpong@gmail.com ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
----![MT5](https://img.shields.io/badge/MetaTrader-5-green.svg)
+- [คุณสมบัติ](#-คุณสมบัติ)---![MT5](https://img.shields.io/badge/MetaTrader-5-green.svg)
 
-## สารบัญ![License](https://img.shields.io/badge/license-MIT-orange.svg)Version: **4.2**![MetaTrader5](https://img.shields.io/badge/platform-MT5-orange.svg)
+- [ความต้องการ](#-ความต้องการ)
 
-- คุณสมบัติเด่น
+- [ติดตั้ง](#-ติดตั้ง)## สารบัญ![License](https://img.shields.io/badge/license-MIT-orange.svg)Version: **4.2**![MetaTrader5](https://img.shields.io/badge/platform-MT5-orange.svg)
 
-- ความต้องการของระบบ---![Python](https://img.shields.io/badge/python-v3.8+-blue.svg)## 📋 Overview
+- [ตั้งค่า](#-ตั้งค่า)
 
-- วิธีติดตั้ง
+- [ใช้งาน](#-ใช้งาน)- คุณสมบัติเด่น
 
-- การตั้งค่า## 📋 Table of Contents![License](https://img.shields.io/badge/license-MIT-green.svg)
+- [กลยุทธ์](#-กลยุทธ์)
 
-- วิธีใช้งาน
+- [อินดิเคเตอร์](#-อินดิเคเตอร์)- ความต้องการของระบบ---![Python](https://img.shields.io/badge/python-v3.8+-blue.svg)## 📋 Overview
 
-- กลยุทธ์การเทรด- [Features](#-features)![MetaTrader5](https://img.shields.io/badge/platform-MT5-orange.svg)This project is a sophisticated automated trading bot designed for MetaTrader 5 platform. It features a modern GUI interface with real-time chart visualization, technical indicator analysis, and automated trading execution based on Supertrend strategy.
+- [ป้องกันความเสี่ยง](#-ป้องกันความเสี่ยง)
 
-- อินดิเคเตอร์
+- [สร้าง .exe](#-สร้าง-exe)- วิธีติดตั้ง
 
-- การจัดการความเสี่ยง- [Screenshots](#-screenshots)
+- [แก้ปัญหา](#-แก้ปัญหา)
 
-- การสร้างไฟล์ .exe
+- [ข้อจำกัด](#-ข้อจำกัด)- การตั้งค่า## 📋 Table of Contents![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-- การแก้ไขปัญหา- [Installation](#-installation)---### 🎯 Key Features
+---- วิธีใช้งาน
+
+## ✨ คุณสมบัติ- กลยุทธ์การเทรด- [Features](#-features)![MetaTrader5](https://img.shields.io/badge/platform-MT5-orange.svg)This project is a sophisticated automated trading bot designed for MetaTrader 5 platform. It features a modern GUI interface with real-time chart visualization, technical indicator analysis, and automated trading execution based on Supertrend strategy.
+
+### 🎯 ฟีเจอร์หลัก- อินดิเคเตอร์
+
+- **4 กลยุทธ์**: BULLMARKET • BOLLINGER • SUPERTREND • DONCHAIN
+
+- **กราฟเรียลไทม์**: เปิด/ปิด indicators ได้ทันที (SuperTrend, Bollinger, EMA/SMA, Donchian, RSI, MACD)- การจัดการความเสี่ยง- [Screenshots](#-screenshots)
+
+- **UI 3 คอลัมน์**: ตั้งค่า → กราฟ → Log
+
+- **แดชบอร์ด**: แสดง P/L และจำนวนออเดอร์แบบเรียลไทม์- การสร้างไฟล์ .exe
+
+- **ภาษาไทย**: Log พร้อมวันที่พ.ศ.
+
+- **ป้องกันความเสี่ยง**: Cooldown 20 วินาที + Trailing Profit- การแก้ไขปัญหา- [Installation](#-installation)---### 🎯 Key Features
+
+- **ไอคอนสวย**: autobot.ico บน taskbar
 
 - ใบอนุญาตและข้อจำกัดความรับผิดชอบ
 
+---
+
 - [Configuration](#-configuration)
+
+## 🧩 ความต้องการ
 
 ---
 
-# 🤖 MT5 Autobot v4.3
+- Windows 10/11 (64-bit)
+
+- MetaTrader 5 (ล็อกอินแล้ว)# 🤖 MT5 Autobot v4.3
+
+- Python 3.8+
 
 ## คุณสมบัติเด่น
 
-- กลยุทธ์ให้เลือก: BULLMARKET, BOLLINGER, SUPERTREND, DONCHAINA professional automated trading bot for MetaTrader 5 with a modern UI, multiple strategies, and strong risk management.
+**Python packages** → ดู `requirements.txt`
 
-- กราฟแบบเรียลไทม์ เปิด/ปิดอินดิเคเตอร์ได้ทันที (SuperTrend, Bollinger, EMA/SMA, Donchian, RSI, MACD)
+``````- กลยุทธ์ให้เลือก: BULLMARKET, BOLLINGER, SUPERTREND, DONCHAINA professional automated trading bot for MetaTrader 5 with a modern UI, multiple strategies, and strong risk management.
 
-- UI สมัยใหม่ด้วย Tkinter แบ่งเป็น 3 ส่วน: ตั้งค่า • กราฟ • Log![Python](https://img.shields.io/badge/python-3.8%2B-blue)
+MetaTrader5
 
-- แสดง P/L และจำนวนออเดอร์แบบเรียลไทม์![MetaTrader5](https://img.shields.io/badge/MetaTrader-5-green)
+pandas- กราฟแบบเรียลไทม์ เปิด/ปิดอินดิเคเตอร์ได้ทันที (SuperTrend, Bollinger, EMA/SMA, Donchian, RSI, MACD)
 
-- Log ภาษาไทย พร้อมวัน-เวลาแบบพุทธศักราช![License](https://img.shields.io/badge/license-MIT-orange)
+pandas-ta
 
-- ระบบป้องกันความเสี่ยง: Cooldown + Trailing Profit
+mplfinance- UI สมัยใหม่ด้วย Tkinter แบ่งเป็น 3 ส่วน: ตั้งค่า • กราฟ • Log![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 
-- ไอคอนโปรแกรมและ Taskbar บน Windows (autobot.ico)---
+matplotlib
 
----## 📚 Table of Contents
-
-- Features
-
-## ความต้องการของระบบ- Requirements
-
-- Windows 10/11 (64-bit)- Installation
-
-- ติดตั้งและล็อกอิน MetaTrader 5 แล้ว- Configuration
-
-- Python 3.8 ขึ้นไป- Usage
-
-- Strategies
-
-แพ็กเกจ Python (ดูรายละเอียดใน `requirements.txt`):- Indicators
-
-- MetaTrader5, pandas, pandas-ta, mplfinance, matplotlib- Risk Management
-
-- Build Executable
-
----- Troubleshooting
-
-- License & Disclaimer
-
-## วิธีติดตั้ง
-
-````powershell---
-
-# 1) โคลนโปรเจกต์
-
-git clone https://github.com/kimookpong/MT5-bot-with-python.git## ✨ Features
-
-cd MT5-bot-with-python- Multiple strategies: BULLMARKET, BOLLINGER, SUPERTREND, DONCHAIN
-
-- Real-time chart with toggleable indicators (SuperTrend, Bollinger, EMA/SMA, Donchian, RSI, MACD)
-
-# 2) สร้าง Virtual Environment (แนะนำ)- Modern Tkinter UI: 3-column layout (Controls • Chart • Log)
-
-python -m venv .venv- Live P/L and positions dashboard
-
-.\.venv\Scripts\Activate.ps1- Thai language logs with Buddhist calendar timestamps
-
-- Advanced risk control: cooldown + trailing profit
-
-# 3) ติดตั้ง dependencies- Windows taskbar icon and custom app icon (autobot.ico)
-
-pip install -r requirements.txt
-
----
-
-# 4) รันโปรแกรม
-
-python mt5_v4.py## 🧩 Requirements
-
-```- Windows 10/11 (64-bit)
-
-- MetaTrader 5 installed and logged in
-
----- Python 3.8+
+```- แสดง P/L และจำนวนออเดอร์แบบเรียลไทม์![MetaTrader5](https://img.shields.io/badge/MetaTrader-5-green)
 
 
 
-## การตั้งค่าPython packages (see requirements.txt):
+---- Log ภาษาไทย พร้อมวัน-เวลาแบบพุทธศักราช![License](https://img.shields.io/badge/license-MIT-orange)
 
-- กรอก Account / Password / Server ใน UI แล้วกดเชื่อมต่อ- MetaTrader5, pandas, pandas-ta, mplfinance, matplotlib
 
-- ปรับพารามิเตอร์ใน UI ได้ดังนี้:
 
-  - Symbol: เริ่มต้นเป็น XAUUSDm---
+## 🛠️ ติดตั้ง- ระบบป้องกันความเสี่ยง: Cooldown + Trailing Profit
 
-  - Interval: 1m, 5m, 15m, 30m, 1h, 4h, 1d (เริ่มต้น 5m)
 
-  - Lot Size: เริ่มต้น 0.01## �️ Installation
 
-  - Trigger Price: ระยะ (ดอลลาร์) สำหรับ Trailing Profit (เริ่มต้น 3)```powershell
+```powershell- ไอคอนโปรแกรมและ Taskbar บน Windows (autobot.ico)---
 
-  - Max Orders: สูงสุดของออเดอร์ค้าง (เริ่มต้น 100)# 1) Clone
+# โคลน
 
-  - Indicator: เริ่มต้นเป็น SUPERTRENDgit clone https://github.com/kimookpong/MT5-bot-with-python.git
+git clone https://github.com/kimookpong/MT5-bot-with-python.git---## 📚 Table of Contents
 
 cd MT5-bot-with-python
 
-ค่าคงที่เพิ่มเติม (แก้ได้ใน `mt5_v4.py`):
+- Features
 
-```python# 2) (Recommended) Create venv
+# สร้าง venv (แนะนำ)
 
-COOLDOWN_SECONDS = 20            # เวลาหน่วงป้องกันเข้าออกไวเกินpython -m venv .venv
+python -m venv .venv## ความต้องการของระบบ- Requirements
 
-MINIMUM_TRIGGER_LENGTH = 5       # ขั้นขั้นต่ำของกำไรเพื่ออัปเดต Trailing (ถ้าใช้แบบ fix).\.venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 
-````
+- Windows 10/11 (64-bit)- Installation
 
-# 3) Install deps
+# ติดตั้ง
+
+pip install -r requirements.txt- ติดตั้งและล็อกอิน MetaTrader 5 แล้ว- Configuration
+
+
+
+# รัน- Python 3.8 ขึ้นไป- Usage
+
+python mt5_v4.py
+
+```- Strategies
+
+
+
+---แพ็กเกจ Python (ดูรายละเอียดใน `requirements.txt`):- Indicators
+
+
+
+## ⚙️ ตั้งค่า- MetaTrader5, pandas, pandas-ta, mplfinance, matplotlib- Risk Management
+
+
+
+### ในหน้า UI- Build Executable
+
+1. **Connection**: กรอก Account / Password / Server → กด Connect
+
+2. **Parameters**:---- Troubleshooting
+
+   - Symbol: `XAUUSDm` (ทองคำ)
+
+   - Interval: `5m` (1m/5m/15m/30m/1h/4h/1d)- License & Disclaimer
+
+   - Lot Size: `0.01`
+
+   - Trigger Price: `3` USD (ขั้นของ Trailing Profit)## วิธีติดตั้ง
+
+   - Max Orders: `100`
+
+   - Indicator: `SUPERTREND`````powershell---
+
+
+
+### ในโค้ด `mt5_v4.py`# 1) โคลนโปรเจกต์
+
+```python
+
+COOLDOWN_SECONDS = 20          # หน่วงเวลาก่อนเข้าใหม่git clone https://github.com/kimookpong/MT5-bot-with-python.git## ✨ Features
+
+MINIMUM_TRIGGER_LENGTH = 5     # ระยะขั้นต่ำ (ถ้าใช้แบบ fix)
+
+```cd MT5-bot-with-python- Multiple strategies: BULLMARKET, BOLLINGER, SUPERTREND, DONCHAIN
+
+
+
+---- Real-time chart with toggleable indicators (SuperTrend, Bollinger, EMA/SMA, Donchian, RSI, MACD)
+
+
+
+## 🚀 ใช้งาน# 2) สร้าง Virtual Environment (แนะนำ)- Modern Tkinter UI: 3-column layout (Controls • Chart • Log)
+
+
+
+1. กด **🔌 Connect** → รอ "✅ เชื่อมต่อสำเร็จ!"python -m venv .venv- Live P/L and positions dashboard
+
+2. ปรับค่าในพาเนล Parameters (ถ้าต้องการ)
+
+3. กด **🚀 Start** → บอทเริ่มทำงาน.\.venv\Scripts\Activate.ps1- Thai language logs with Buddhist calendar timestamps
+
+4. ติดตามกราฟ, Active Orders, P/L
+
+5. กด **⏸️ Pause** เมื่อต้องการหยุด- Advanced risk control: cooldown + trailing profit
+
+
+
+> 💡 Log จะแสดงเวลาพ.ศ. และระบายสีตามประเภทข้อความ# 3) ติดตั้ง dependencies- Windows taskbar icon and custom app icon (autobot.ico)
+
+
 
 ---pip install -r requirements.txt
 
-## วิธีใช้งาน# 4) Run
 
-1. กด 🔌 Connect และรอข้อความ "✅ เชื่อมต่อสำเร็จ!"python mt5_v4.py
 
-2. ปรับค่าที่ต้องการในพาเนล Parameters```
+## 📈 กลยุทธ์---
 
-3. กด 🚀 Start เพื่อเริ่มบอท
 
-4. ติดตามกราฟ, Active Orders, และผลกำไร/ขาดทุนแบบเรียลไทม์---
 
-5. กด ⏸️ Pause เพื่อหยุดชั่วคราวได้ทุกเมื่อ
+| กลยุทธ์ | วิธีเข้า | เหมาะกับ |# 4) รันโปรแกรม
 
-## ⚙️ Configuration
+|---------|----------|----------|
 
-Log จะแสดงสีและเวลาตามพ.ศ. เพื่ออ่านง่าย- Account, Password, Server: fill in the UI then Connect
+| **BULLMARKET** | EMA เร็ว/ช้า ตัดกัน + ฟิลเตอร์เทรนด์ | ตลาดขาขึ้น |python mt5_v4.py## 🧩 Requirements
 
-- Parameters in UI:
+| **BOLLINGER** | แตะแถบ / เบรกเอาท์ | ตลาดผันผวน |
 
---- - Symbol: XAUUSDm (default)
+| **SUPERTREND** | ตามเทรนด์ด้วยแถบ ATR | ตลาดมีเทรนด์ชัด |```- Windows 10/11 (64-bit)
 
-- Interval: 1m, 5m, 15m, 30m, 1h, 4h, 1d (default 5m)
+| **DONCHAIN** | เบรกกรอบช่องทาง | ตลาดทำ breakout |
 
-## กลยุทธ์การเทรด - Lot Size: default 0.01
+- MetaTrader 5 installed and logged in
 
-- BULLMARKET: ใช้ EMA เร็ว/ช้า ตัดกัน + ตัวกรองเทรนด์ - Trigger Price: trailing profit step in USD (default 3)
+สัญญาณออก (Exit) ดูจากสัญญาณกลับทิศ + การจัดการความเสี่ยง
 
-- BOLLINGER: เทรดตามการแตะแถบและการเบรกเอาท์/รีเวอร์ชัน - Max Orders: default 100
+---- Python 3.8+
 
-- SUPERTREND: ตามเทรนด์ด้วยแถบ ATR - Indicator: SUPERTREND (default)
+---
 
-- DONCHAIN: เข้าเมื่อราคาเบรกกรอบช่องทาง
 
-Advanced constants (in `mt5_v4.py`):
 
-สัญญาณออก (Exit) พิจารณาจากสัญญาณกลับทิศและการจัดการความเสี่ยงด้านล่าง```python
+## 📊 อินดิเคเตอร์
 
-COOLDOWN_SECONDS = 20
+## การตั้งค่าPython packages (see requirements.txt):
 
----MINIMUM_TRIGGER_LENGTH = 5
+- **SuperTrend** → period: 10, multiplier: 3.0
+
+- **Bollinger Bands** → period: 20, std: 2.0- กรอก Account / Password / Server ใน UI แล้วกดเชื่อมต่อ- MetaTrader5, pandas, pandas-ta, mplfinance, matplotlib
+
+- **EMA/SMA** → เช่น EMA 9/21, EMA 200, SMA 50
+
+- **Donchian Channels** → ช่องทางราคา- ปรับพารามิเตอร์ใน UI ได้ดังนี้:
+
+- **RSI** → 14 periods
+
+- **MACD** → 12, 26, 9  - Symbol: เริ่มต้นเป็น XAUUSDm---
+
+
+
+> เปิด/ปิด indicators เหนือกราฟได้ทันที กราฟรีเฟรชอัตโนมัติ  - Interval: 1m, 5m, 15m, 30m, 1h, 4h, 1d (เริ่มต้น 5m)
+
+
+
+---  - Lot Size: เริ่มต้น 0.01## �️ Installation
+
+
+
+## 🛡️ ป้องกันความเสี่ยง  - Trigger Price: ระยะ (ดอลลาร์) สำหรับ Trailing Profit (เริ่มต้น 3)```powershell
+
+
+
+### 1. Cooldown (20 วินาที)  - Max Orders: สูงสุดของออเดอร์ค้าง (เริ่มต้น 100)# 1) Clone
+
+ป้องกันเข้าออเดอร์ซ้ำใกล้กัน
+
+```python  - Indicator: เริ่มต้นเป็น SUPERTRENDgit clone https://github.com/kimookpong/MT5-bot-with-python.git
+
+def is_on_cooldown():
+
+    if get_last_order_time() is None:cd MT5-bot-with-python
+
+        return False
+
+    return (datetime.now() - get_last_order_time()).total_seconds() < COOLDOWN_SECONDSค่าคงที่เพิ่มเติม (แก้ได้ใน `mt5_v4.py`):
+
+``````
+
+`````python# 2) (Recommended) Create venv
+
+### 2. Trailing Profit
+
+ล็อกกำไรแบบไดนามิก ตาม **Trigger Price** ใน UICOOLDOWN_SECONDS = 20            # เวลาหน่วงป้องกันเข้าออกไวเกินpython -m venv .venv
+
+
+
+**กลไก**:MINIMUM_TRIGGER_LENGTH = 5       # ขั้นขั้นต่ำของกำไรเพื่ออัปเดต Trailing (ถ้าใช้แบบ fix).\.venv\Scripts\Activate.ps1
+
+- กำไรเพิ่ม > Trigger → อัปเดตจุดล็อก
+
+- กำไรลด < จุดล็อก → ปิดอัตโนมัติ````
+
+
+
+**ตัวอย่าง** (Trigger = 3 USD):# 3) Install deps
+
+`````
+
+เข้า: $2,000---pip install -r requirements.txt
+
+กำไร $3 → ล็อกที่ $3
+
+กำไร $6 → ล็อกที่ $6## วิธีใช้งาน# 4) Run
+
+กำไร $9 → ล็อกที่ $9
+
+กำไรลง $8 → ปิดอัตโนมัติ (ป้องกันกำไร $9)1. กด 🔌 Connect และรอข้อความ "✅ เชื่อมต่อสำเร็จ!"python mt5_v4.py
 
 ````
 
+2. ปรับค่าที่ต้องการในพาเนล Parameters```
+
+---
+
+3. กด 🚀 Start เพื่อเริ่มบอท
+
+## 📦 สร้าง .exe
+
+4. ติดตามกราฟ, Active Orders, และผลกำไร/ขาดทุนแบบเรียลไทม์---
+
+```powershell
+
+pip install pyinstaller5. กด ⏸️ Pause เพื่อหยุดชั่วคราวได้ทุกเมื่อ
+
+pyinstaller --onefile --windowed --icon=autobot.ico --add-data "autobot.ico;." --name MT5_Autobot_v4.3 mt5_v4.py
+
+```## ⚙️ Configuration
+
+
+
+ไฟล์จะอยู่ที่: `dist\MT5_Autobot_v4.3.exe`Log จะแสดงสีและเวลาตามพ.ศ. เพื่ออ่านง่าย- Account, Password, Server: fill in the UI then Connect
+
+
+
+---- Parameters in UI:
+
+
+
+## 🔧 แก้ปัญหา--- - Symbol: XAUUSDm (default)
+
+
+
+| ปัญหา | วิธีแก้ |- Interval: 1m, 5m, 15m, 30m, 1h, 4h, 1d (default 5m)
+
+|-------|---------|
+
+| **เชื่อมต่อไม่ได้** | ตรวจ: บัญชี/รหัส/server ถูกต้อง? MT5 เปิดอยู่? เน็ตเชื่อมต่อ? |## กลยุทธ์การเทรด - Lot Size: default 0.01
+
+| **ไม่ส่งออเดอร์** | ตรวจ: ตลาดเปิด? symbol ถูก? lot เหมาะสม? |
+
+| **เข้าออกไวเกิน** | เพิ่มค่า `COOLDOWN_SECONDS` |- BULLMARKET: ใช้ EMA เร็ว/ช้า ตัดกัน + ตัวกรองเทรนด์ - Trigger Price: trailing profit step in USD (default 3)
+
+| **กราฟไม่อัปเดต** | ตรวจการเชื่อมต่อ / ลองสลับ indicators |
+
+- BOLLINGER: เทรดตามการแตะแถบและการเบรกเอาท์/รีเวอร์ชัน - Max Orders: default 100
+
+---
+
+- SUPERTREND: ตามเทรนด์ด้วยแถบ ATR - Indicator: SUPERTREND (default)
+
+## 📄 ข้อจำกัด
+
+- DONCHAIN: เข้าเมื่อราคาเบรกกรอบช่องทาง
+
+**⚠️ ข้อควรระวัง**:
+
+- ซอฟต์แวร์นี้สำหรับการศึกษาเท่านั้นAdvanced constants (in `mt5_v4.py`):
+
+- การเทรดมีความเสี่ยงสูง อาจขาดทุนได้
+
+- ทดสอบในบัญชี demo ก่อนใช้จริงสัญญาณออก (Exit) พิจารณาจากสัญญาณกลับทิศและการจัดการความเสี่ยงด้านล่าง```python
+
+- ผู้พัฒนาไม่รับผิดชอบความเสียหาย
+
+COOLDOWN_SECONDS = 20
+
+**📜 License**: MIT License
+
+---MINIMUM_TRIGGER_LENGTH = 5
+
+---
+
+````
+
+<div align="center">
+
 ## อินดิเคเตอร์
+
+**Made with ❤️ by [kimookpong](https://github.com/kimookpong)**
 
 - SuperTrend (period 10, multiplier 3.0)---
 
+Version 4.3 | © 2024-2025
+
 - Bollinger Bands (period 20, std 2.0)
+
+</div>
 
 - EMA/SMA (เช่น EMA 9/21, EMA 200, SMA 50)## � Usage
 
@@ -206,11 +392,11 @@ COOLDOWN_SECONDS = 20
 
 - RSI (14) และ MACD (12,26,9)2) Adjust parameters if needed
 
-3) Click 🚀 Start to begin trading
+3. Click 🚀 Start to begin trading
 
 สามารถเปิด/ปิดอินดิเคเตอร์เหนือกราฟ และกราฟจะรีเฟรชให้อัตโนมัติ4) Monitor chart, Active Orders, and P/L
 
-5) Click ⏸️ Pause to stop
+5. Click ⏸️ Pause to stop
 
 ---
 
@@ -220,7 +406,7 @@ Logs are color-coded and timestamped in Thai calendar.
 
 - Cooldown: ป้องกันเข้าออเดอร์ซ้ำซ้อนในช่วงเวลาใกล้กัน (เริ่มต้น 20 วินาที)---
 
-```python
+````python
 
 def is_on_cooldown():## 📈 Strategies
 
