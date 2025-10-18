@@ -14,11 +14,17 @@ import pandas as pd
 import pandas_ta as ta
 import plotly.graph_objects as go
 from tkinter import font
+import sys
+import os
 
 
 period_count = 0
 period_time = 0
-version = "4.2"
+version = "4.3"
+
+# Cooldown (seconds) to prevent immediate re-entry after an order action
+COOLDOWN_SECONDS = 20
+MINIMUM_TRIGGER_LENGTH = 5 
 
 def set_period(count,time):
     global period_count
@@ -39,14 +45,14 @@ completed_profit = 0
 count_order = 0
 last_order_time = None
 
-trigger_price = 0
-def set_trigger_price(price):
-    global trigger_price
-    trigger_price = price
+trigger_profit = 0
+def set_trigger_profit(price):
+    global trigger_profit
+    trigger_profit = price
 
-def get_trigger_price():
-    global trigger_price
-    return trigger_price
+def get_trigger_profit():
+    global trigger_profit
+    return trigger_profit
 
 def set_last_order_time(time):
     global last_order_time
@@ -55,6 +61,16 @@ def set_last_order_time(time):
 def get_last_order_time():
     global last_order_time
     return last_order_time
+
+
+def is_on_cooldown():
+    """Return True if last_order_time is within COOLDOWN_SECONDS from now."""
+    if get_last_order_time() is None:
+        return False
+    try:
+        return (datetime.now() - get_last_order_time()).total_seconds() < COOLDOWN_SECONDS
+    except Exception:
+        return False
 
 
 def get_stat(type):
@@ -86,6 +102,22 @@ root = tk.Tk()
 root.title(f"MT5 Autobot V.{version} BY kimookpong")
 root.state('zoomed')  # Full screen on Windows
 root.configure(bg='#f7fafc')  # Light gray-white background
+
+# Set window icon (for title bar and taskbar)
+try:
+    root.iconbitmap('autobot.ico')
+except Exception:
+    pass  # If icon file not found, continue without it
+
+# Set taskbar icon for Windows (requires ctypes for AppUserModelID)
+try:
+    if sys.platform == 'win32':
+        import ctypes
+        # Set AppUserModelID to show custom icon on taskbar
+        myappid = 'kimookpong.mt5autobot.trading.4.2'
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+except Exception:
+    pass  # If fails, continue without custom taskbar grouping
 
 # Configure modern light theme with custom colors
 style = ttk.Style()
@@ -362,7 +394,7 @@ lot_var.config(state="disabled")
 ttk.Label(param_frame, text="Trigger Price:", style='Info.TLabel').grid(row=2, column=1, sticky="w", pady=(0, 3))
 trigger_var = ttk.Entry(param_frame, width=12, font=('Segoe UI', 8), style='Modern.TEntry')
 trigger_var.grid(row=3, column=1, sticky="ew", pady=(0, 6), padx=(4, 0))
-trigger_var.insert(0, "5")
+trigger_var.insert(0, 3)
 trigger_var.config(state="disabled")
 
 # Max Orders and Indicator in compact layout
@@ -740,11 +772,9 @@ def pause_bot():
     indicator_dropdown.config(state="readonly")
 
 
-
-
-
 def trading_buy(current_time):
-
+    if (get_last_order_time() == current_time):
+        return
     symbol = symbol_var.get()
     lot_size = float(lot_var.get())
     price = mt5.symbol_info_tick(symbol).ask 
@@ -763,12 +793,15 @@ def trading_buy(current_time):
     }
     result = mt5.order_send(request)
     if result.retcode == mt5.TRADE_RETCODE_DONE:
+        # Use wall-clock time for cooldown guards
         set_last_order_time(current_time)
-        set_trigger_price(0)
+        set_trigger_profit(0)
     else:
         log_message(f"❌ คำสั่ง BUY ล้มเหลว: {result}", "red")
 
 def trading_sell(current_time):
+    if (get_last_order_time() == current_time):
+        return
     symbol = symbol_var.get()
     lot_size = float(lot_var.get())
     price = mt5.symbol_info_tick(symbol).bid 
@@ -787,12 +820,15 @@ def trading_sell(current_time):
     }
     result = mt5.order_send(request)
     if result.retcode == mt5.TRADE_RETCODE_DONE:
+        # Use wall-clock time for cooldown guards
         set_last_order_time(current_time)
-        set_trigger_price(0)
+        set_trigger_profit(0)
     else:
         log_message(f"❌ คำสั่ง SELL ล้มเหลว: {result}", "red")
 
 def trading_close(position,current_time):
+        if (get_last_order_time() == current_time):
+            return
         symbol = symbol_var.get() 
         ticket = position.ticket
         volume = position.volume
@@ -817,7 +853,16 @@ def trading_close(position,current_time):
             log_message(f"💰 ปิดออเดอร์ P/L: {position.profit:.2f} USD", "green" if position.profit >=0 else "red")
             set_stat("order", get_stat("order") + 1)
             set_stat("profit", get_stat("profit") + float(position.profit))
-            # set_last_order_time(current_time)
+            # รีเซ็ต trigger_profit เมื่อปิดออเดอร์
+            set_trigger_profit(0)
+            # ป้องกันการเปิดออเดอร์ใหม่ในช่วงเวลาเดียวกัน
+            try:
+                set_last_order_time(current_time)
+            except Exception:
+                # in rare cases current_time may be None; ignore
+                pass
+            # ให้เวลา MT5 อัพเดต positions ก่อนจะประเมินสัญญาณใหม่
+            time.sleep(1)
 
             max_order = max_order_var.get()
             if get_stat("order") >= int(max_order):
@@ -880,10 +925,28 @@ def run_trading_bot():
             for position in positions:
                 profit = float(position.profit)
                 total_profit = total_profit + profit
+                
+                # 🎯 TRAILING PROFIT SYSTEM
+                # อัพเดท trigger_profit เมื่อกำไรเพิ่มขึ้นเกิน trigger_var
+                if profit - get_trigger_profit() > float(trigger_var.get()):
+                    set_trigger_profit(profit)
+                    log_message(f"📊 อัพเดท Trailing: {profit:.2f} USD", "blue")
+                
+                # 🛑 บังคับปิดเมื่อกำไรลดลงต่ำกว่า trigger_profit
+                elif profit < get_trigger_profit() and get_trigger_profit() > 0:
+                    trading_close(position, current_time)
+                    log_message(f"[TP] 💰 Trailing Profit: ปิดที่ {profit:.2f} (จาก {get_trigger_profit():.2f})", "green")
+                    set_trigger_profit(0)  # รีเซ็ต trigger
+                    continue
+                    
             if total_profit < 0:
                 process_order_label.configure(text=f"{len(positions)} ({total_profit:.2f} USD)", style='Loss.TLabel')
             else:
                 process_order_label.configure(text=f"{len(positions)} ({total_profit:.2f} USD)", style='Profit.TLabel')
+        else:
+            # รีเซ็ต trigger_profit เมื่อไม่มี position
+            if get_trigger_profit() > 0:
+                set_trigger_profit(0)
         
         if indicator == "BULLMARKET":
             # ดึงข้อมูลที่จำเป็น
@@ -919,7 +982,7 @@ def run_trading_bot():
                 rsi_curr = df['RSI'].iloc[-1]
                 is_rsi_ok = rsi_curr < 75
 
-                if is_in_bull_trend and is_in_buy_zone and is_rsi_ok and current_time != get_last_order_time():
+                if is_in_bull_trend and is_in_buy_zone and is_rsi_ok and not is_on_cooldown():
                     # ตั้ง Stop Loss ไว้ใต้เส้น EMA_Slow เล็กน้อยเพื่อเป็น Buffer
                     # สำหรับ XAU/BTC การตั้ง SL ตาม % อาจจะดีกว่า
                     # ตัวอย่าง: ตั้ง SL ต่ำกว่าเส้น EMA_Slow ไป 0.15%
@@ -972,7 +1035,7 @@ def run_trading_bot():
                 is_inside_lower = close_curr > lower_band_curr
                 is_rsi_buy_confirm = rsi_prev < 30 and rsi_curr > 30
 
-                if was_outside_lower and is_inside_lower and is_rsi_buy_confirm and current_time != get_last_order_time():
+                if was_outside_lower and is_inside_lower and is_rsi_buy_confirm and not is_on_cooldown():
                     sl_price = df['low'].iloc[-2] # SL ที่ low ของแท่งที่ทะลุออกไป
                     trading_buy(current_time, sl=sl_price)
                     log_message(f"[BB] ✅ BUY: กลับเข้ากรอบล่าง RSI>30", "blue")
@@ -985,7 +1048,7 @@ def run_trading_bot():
                 is_inside_upper = close_curr < upper_band_curr
                 is_rsi_sell_confirm = rsi_prev > 70 and rsi_curr < 70
                 
-                if was_outside_upper and is_inside_upper and is_rsi_sell_confirm and current_time != get_last_order_time():
+                if was_outside_upper and is_inside_upper and is_rsi_sell_confirm and not is_on_cooldown():
                     sl_price = df['high'].iloc[-2] # SL ที่ high ของแท่งที่ทะลุออกไป
                     trading_sell(current_time, sl=sl_price)
                     log_message(f"[BB] 🔻 SELL: กลับเข้ากรอบบน RSI<70", "red")
@@ -1040,7 +1103,7 @@ def run_trading_bot():
                 # 2. RSI > 50 เพื่อยืนยัน Momentum ฝั่งขึ้น
                 is_bullish_flip = supertrend_dir == 1 and supertrend_dir_prev == -1
                 
-                if is_bullish_flip and rsi_curr > 50 and current_time != get_last_order_time():
+                if is_bullish_flip and rsi_curr > 50 and not is_on_cooldown():
                     # ไม่จำเป็นต้องมี SL ในคำสั่ง เพราะ logic ด้านบนจะจัดการให้
                     trading_buy(current_time)
                     log_message(f"[ST] ✅ BUY: ST พลิกขึ้น RSI {rsi_curr:.1f}", "green")
@@ -1052,7 +1115,7 @@ def run_trading_bot():
                 # 2. RSI < 50 เพื่อยืนยัน Momentum ฝั่งลง
                 is_bearish_flip = supertrend_dir == -1 and supertrend_dir_prev == 1
                 
-                if is_bearish_flip and rsi_curr < 50 and current_time != get_last_order_time():
+                if is_bearish_flip and rsi_curr < 50 and not is_on_cooldown():
                     trading_sell(current_time)
                     log_message(f"[ST] 🔻 SELL: ST พลิกลง RSI {rsi_curr:.1f}", "red")
                     # mt5.modify_position(ticket, sl=supertrend_val)                    
@@ -1106,7 +1169,7 @@ def run_trading_bot():
                 # 2. RSI > 60 เพื่อยืนยัน Momentum ที่แข็งแกร่ง
                 is_buy_breakout = close_curr > dcu_curr and close_prev <= dcu_curr
                 
-                if is_buy_breakout and rsi_curr > 60 and current_time != get_last_order_time():
+                if is_buy_breakout and rsi_curr > 60 and not is_on_cooldown():
                     trading_buy(current_time)
                     log_message(f"[DC] ✅ BUY: Breakout ช่องบน RSI {rsi_curr:.1f}", "green")
 
@@ -1115,7 +1178,7 @@ def run_trading_bot():
                 # 2. RSI < 40 เพื่อยืนยัน Momentum ที่แข็งแกร่ง
                 is_sell_breakout = close_curr < dcl_curr and close_prev >= dcl_curr
                 
-                if is_sell_breakout and rsi_curr < 40 and current_time != get_last_order_time():
+                if is_sell_breakout and rsi_curr < 40 and not is_on_cooldown():
                     trading_sell(current_time)
                     log_message(f"[DC] 🔻 SELL: Breakdown ช่องล่าง RSI {rsi_curr:.1f}", "red")
          
