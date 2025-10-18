@@ -26,6 +26,10 @@ version = "4.3"
 COOLDOWN_SECONDS = 20
 MINIMUM_TRIGGER_LENGTH = 5 
 
+# Buy/Sell signals for chart markers
+buy_signals = []
+sell_signals = []
+
 def set_period(count,time):
     global period_count
     global period_time
@@ -99,7 +103,7 @@ def set_status(status):
 
 # Create the main window - Full screen
 root = tk.Tk()
-root.title(f"MT5 Autobot V.{version} BY kimookpong")
+root.title(f"MT5 Autobot V.{version}")
 root.state('zoomed')  # Full screen on Windows
 root.configure(bg='#f7fafc')  # Light gray-white background
 
@@ -595,7 +599,7 @@ show_macd.trace_add('write', lambda *args: refresh_chart())
 
 # Configure matplotlib for full screen display - Single chart approach
 fig = Figure(figsize=(12, 6), facecolor='#f7fafc', dpi=100)
-fig.subplots_adjust(left=0.06, right=0.98, top=0.95, bottom=0.15)
+fig.subplots_adjust(left=0.02, right=0.98, top=0.95, bottom=0.15)
 
 # Create main axis
 ax = fig.add_subplot()
@@ -925,15 +929,17 @@ def run_trading_bot():
             for position in positions:
                 profit = float(position.profit)
                 total_profit = total_profit + profit
+
+                trigger_length = profit - float(trigger_var.get())
                 
                 # 🎯 TRAILING PROFIT SYSTEM
                 # อัพเดท trigger_profit เมื่อกำไรเพิ่มขึ้นเกิน trigger_var
-                if profit - get_trigger_profit() > float(trigger_var.get()):
-                    set_trigger_profit(profit)
-                    log_message(f"📊 อัพเดท Trailing: {profit:.2f} USD", "blue")
+                if trigger_length > get_trigger_profit():
+                    set_trigger_profit(trigger_length)
+                    log_message(f"📊 อัพเดท Trailing: {trigger_length:.2f} USD", "blue")
                 
                 # 🛑 บังคับปิดเมื่อกำไรลดลงต่ำกว่า trigger_profit
-                elif profit < get_trigger_profit() and get_trigger_profit() > 0:
+                elif trigger_length < get_trigger_profit() and get_trigger_profit() > 0:
                     trading_close(position, current_time)
                     log_message(f"[TP] 💰 Trailing Profit: ปิดที่ {profit:.2f} (จาก {get_trigger_profit():.2f})", "green")
                     set_trigger_profit(0)  # รีเซ็ต trigger
@@ -1072,13 +1078,13 @@ def run_trading_bot():
                     # ปิด Buy ถ้า Supertrend พลิกเป็นลง
                     if is_buy and supertrend_dir == -1:
                         trading_close(position, current_time)
-                        log_message(f"[ST] 🔄 ปิด BUY: สัญญาณพลิกลง | P/L: {position.profit:.2f}", "yellow")
+                   
                         continue # ไปยัง position ถัดไป
 
                     # ปิด Sell ถ้า Supertrend พลิกเป็นขึ้น
                     elif is_sell and supertrend_dir == 1:
                         trading_close(position, current_time)
-                        log_message(f"[ST] 🔄 ปิด SELL: สัญญาณพลิกขึ้น | P/L: {position.profit:.2f}", "yellow")
+                  
                         continue # ไปยัง position ถัดไป
                     
                     # ✅ EXIT 2: Trailing Stop Loss โดยใช้เส้น Supertrend (หัวใจของกลยุทธ์)
@@ -1107,6 +1113,9 @@ def run_trading_bot():
                     # ไม่จำเป็นต้องมี SL ในคำสั่ง เพราะ logic ด้านบนจะจัดการให้
                     trading_buy(current_time)
                     log_message(f"[ST] ✅ BUY: ST พลิกขึ้น RSI {rsi_curr:.1f}", "green")
+                    # บันทึกจุด Buy สำหรับแสดงบนกราฟ (ใช้ index จาก dataframe)
+                    global buy_signals
+                    buy_signals.append({'time': df.index[-1], 'price': close_price})
                     # อาจจะตั้ง SL เริ่มต้นที่เส้น Supertrend ปัจจุบันเพื่อความปลอดภัย
                     # mt5.modify_position(ticket, sl=supertrend_val)
 
@@ -1118,6 +1127,9 @@ def run_trading_bot():
                 if is_bearish_flip and rsi_curr < 50 and not is_on_cooldown():
                     trading_sell(current_time)
                     log_message(f"[ST] 🔻 SELL: ST พลิกลง RSI {rsi_curr:.1f}", "red")
+                    # บันทึกจุด Sell สำหรับแสดงบนกราฟ (ใช้ index จาก dataframe)
+                    global sell_signals
+                    sell_signals.append({'time': df.index[-1], 'price': close_price})
                     # mt5.modify_position(ticket, sl=supertrend_val)                    
                     
         elif indicator == "DONCHAIN":
@@ -1268,7 +1280,7 @@ def poth_graph(symbol, data, indicator):
         subplot_count += 1
     
     # Create subplots with proper height ratios using GridSpec
-    fig.subplots_adjust(left=0.08, right=0.96, top=0.95, bottom=0.12)
+    fig.subplots_adjust(left=0.05, right=0.96, top=0.95, bottom=0.12)
     
     if show_rsi_subplot and show_macd_subplot:
         # 3 subplots: Price (60%), RSI (20%), MACD (20%)
@@ -1368,6 +1380,51 @@ def poth_graph(symbol, data, indicator):
                 # Bearish Supertrend (Red) - Thicker and more visible  
                 mpf.make_addplot(supertrend_bearish, ax=ax_price, color='#cc0000', width=1.5, alpha=0.9),
             ])
+            
+            # Add Buy/Sell signal markers
+            global buy_signals, sell_signals
+            
+            # Create arrays for buy/sell signals - show last 50 signals
+            if len(buy_signals) > 0:
+                buy_times = [s['time'] for s in buy_signals[-50:]]
+                buy_prices = [s['price'] for s in buy_signals[-50:]]
+                # Create series with NaN for non-signal points
+                buy_marker = pd.Series(index=data.index, dtype=float)
+                for time, price in zip(buy_times, buy_prices):
+                    # Find closest matching index
+                    if time in data.index:
+                        buy_marker.loc[time] = price
+                    else:
+                        # Try to find nearest time
+                        try:
+                            nearest_idx = data.index.get_indexer([time], method='nearest')[0]
+                            if nearest_idx >= 0:
+                                buy_marker.iloc[nearest_idx] = price
+                        except:
+                            pass
+                
+                if buy_marker.notna().any():
+                    ap.append(mpf.make_addplot(buy_marker, ax=ax_price, type='scatter', 
+                                               marker='^', markersize=200, color='lime', edgecolors='darkgreen', linewidths=2))
+            
+            if len(sell_signals) > 0:
+                sell_times = [s['time'] for s in sell_signals[-50:]]
+                sell_prices = [s['price'] for s in sell_signals[-50:]]
+                sell_marker = pd.Series(index=data.index, dtype=float)
+                for time, price in zip(sell_times, sell_prices):
+                    if time in data.index:
+                        sell_marker.loc[time] = price
+                    else:
+                        try:
+                            nearest_idx = data.index.get_indexer([time], method='nearest')[0]
+                            if nearest_idx >= 0:
+                                sell_marker.iloc[nearest_idx] = price
+                        except:
+                            pass
+                
+                if sell_marker.notna().any():
+                    ap.append(mpf.make_addplot(sell_marker, ax=ax_price, type='scatter', 
+                                               marker='v', markersize=200, color='red', edgecolors='darkred', linewidths=2))
             
     elif indicator == "DONCHAIN":
         # Enhanced Donchian Channels visualization - More prominent when selected
