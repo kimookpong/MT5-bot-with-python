@@ -43,6 +43,8 @@ trading_bot_status = False
 
 completed_order = 0
 completed_profit = 0
+profit_order_count = 0
+loss_order_count = 0
 
 last_order_time = None
 
@@ -63,16 +65,6 @@ def get_last_order_time():
     global last_order_time
     return last_order_time
 
-
-def is_on_cooldown():
-    """Return True if last_order_time is within COOLDOWN_SECONDS from now."""
-    if get_last_order_time() is None:
-        return False
-    try:
-        return (datetime.now() - get_last_order_time()).total_seconds() < COOLDOWN_SECONDS
-    except Exception:
-        return False
-
 # -------------- Helper conversions for user-editable params --------------
 def _to_int(s, default):
     try:
@@ -91,18 +83,30 @@ def _to_float(s, default):
 def get_stat(type):
     global completed_order
     global completed_profit
+    global profit_order_count
+    global loss_order_count
     if type == "order":
         return completed_order
     elif type == "profit":
         return completed_profit
+    elif type == "profit_count":
+        return profit_order_count
+    elif type == "loss_count":
+        return loss_order_count
     
 def set_stat(type, value):
     global completed_order
     global completed_profit
+    global profit_order_count
+    global loss_order_count
     if type == "order":
         completed_order = value
     elif type == "profit":
         completed_profit = value
+    elif type == "profit_count":
+        profit_order_count = value
+    elif type == "loss_count":
+        loss_order_count = value
 
 def get_status():
     global trading_bot_status
@@ -461,7 +465,7 @@ lot_var.grid(row=3, column=0, sticky="ew", pady=(0, 4), padx=(0, 3))
 lot_var.insert(0, "0.01")
 lot_var.config(state="disabled")
 
-ttk.Label(param_frame, text="Trigger:", style='Info.TLabel').grid(row=2, column=1, sticky="w", pady=(0, 2), padx=(3, 5))
+ttk.Label(param_frame, text="Trigger(0=ปิด):", style='Info.TLabel').grid(row=2, column=1, sticky="w", pady=(0, 2), padx=(3, 5))
 trigger_var = ttk.Entry(param_frame, width=10, font=('Segoe UI', 9), style='Modern.TEntry')
 trigger_var.grid(row=3, column=1, sticky="ew", pady=(0, 4), padx=(3, 0))
 trigger_var.insert(0, 3)
@@ -508,6 +512,18 @@ info_frame.pack(fill="x", pady=(0, 10))
 usdt_balance_label = ttk.Label(info_frame, text="Balance: --", 
                                style='Info.TLabel', font=('Segoe UI', 9, 'bold'))
 usdt_balance_label.pack(anchor="w", pady=2, padx=5)
+
+total_profit_label = ttk.Label(info_frame, text="Total Profit: --", 
+                               style='Info.TLabel', font=('Segoe UI', 8))
+total_profit_label.pack(anchor="w", pady=2, padx=5)
+
+profit_order_label = ttk.Label(info_frame, text="Profit Orders: --", 
+                               style='Info.TLabel', font=('Segoe UI', 8))
+profit_order_label.pack(anchor="w", pady=2, padx=5)
+
+loss_order_label = ttk.Label(info_frame, text="Loss Orders: --", 
+                               style='Info.TLabel', font=('Segoe UI', 8))
+loss_order_label.pack(anchor="w", pady=2, padx=5)
 
 time_elapsed_label = ttk.Label(info_frame, text="Runtime: --", 
                                style='Info.TLabel', font=('Segoe UI', 8))
@@ -1044,6 +1060,13 @@ def trading_close(position, current_time):
             log_message(f"💰 ปิดออเดอร์ P/L: {position.profit:.2f} USD", "green" if position.profit >=0 else "red")
             set_stat("order", get_stat("order") + 1)
             set_stat("profit", get_stat("profit") + float(position.profit))
+            
+            # Update profit/loss order counts
+            if position.profit >= 0:
+                set_stat("profit_count", get_stat("profit_count") + 1)
+            else:
+                set_stat("loss_count", get_stat("loss_count") + 1)
+            
             # รีเซ็ต trigger_profit เมื่อปิดออเดอร์
             set_trigger_profit(0)
             # ป้องกันการเปิดออเดอร์ใหม่ในแท่งเทียนเดียวกัน
@@ -1117,8 +1140,14 @@ def run_trading_bot():
 
             if get_stat('profit') < 0:
                 trading_completed_label.configure(text=f"{get_stat('profit'):.2f} USD", style='Loss.TLabel')
+                total_profit_label.config(text=f"Total Profit: ${get_stat('profit'):.2f} USD", foreground='#FC8181')
             else:
                 trading_completed_label.configure(text=f"{get_stat('profit'):.2f} USD", style='Profit.TLabel')
+                total_profit_label.config(text=f"Total Profit: ${get_stat('profit'):.2f} USD", foreground='#68D391')
+            
+            # Update profit and loss order counts
+            profit_order_label.config(text=f"Profit Orders: {get_stat('profit_count')}")
+            loss_order_label.config(text=f"Loss Orders: {get_stat('loss_count')}")
 
             positions=mt5.positions_get(symbol=symbol)
             process_order_label.config(text=f"0 (0.00)")
@@ -1129,21 +1158,21 @@ def run_trading_bot():
                 for position in positions:
                     profit = float(position.profit)
                     total_profit = total_profit + profit
+                    if (float(trigger_var.get()) > 0):
+                        trigger_length = profit - float(trigger_var.get())
 
-                    trigger_length = profit - float(trigger_var.get())
-                    
-                    # 🎯 TRAILING PROFIT SYSTEM
-                    # อัพเดท trigger_profit เมื่อกำไรเพิ่มขึ้นเกิน trigger_var
-                    if trigger_length > get_trigger_profit():
-                        set_trigger_profit(trigger_length)
-                        log_message(f"📊 อัพเดท Trailing: {trigger_length:.2f} USD", "blue")
-                    
-                    # 🛑 บังคับปิดเมื่อกำไรลดลงต่ำกว่า trigger_profit
-                    elif trigger_length < get_trigger_profit() and get_trigger_profit() > 0:
-                        trading_close(position, current_time)
-                        log_message(f"[TP] 💰 Trailing Profit: ปิดที่ {profit:.2f} (จาก {get_trigger_profit():.2f})", "green")
-                        set_trigger_profit(0)  # รีเซ็ต trigger
-                        continue
+                        # 🎯 TRAILING PROFIT SYSTEM
+                        # อัพเดท trigger_profit เมื่อกำไรเพิ่มขึ้นเกิน trigger_var
+                        if trigger_length > get_trigger_profit():
+                            set_trigger_profit(trigger_length)
+                            log_message(f"📊 อัพเดท Trailing: {trigger_length:.2f} USD", "blue")
+                        
+                        # 🛑 บังคับปิดเมื่อกำไรลดลงต่ำกว่า trigger_profit
+                        elif trigger_length < get_trigger_profit() and get_trigger_profit() > 0:
+                            trading_close(position, current_time)
+                            log_message(f"[TP] 💰 Trailing Profit: ปิดที่ {profit:.2f} (จาก {get_trigger_profit():.2f})", "green")
+                            set_trigger_profit(0)  # รีเซ็ต trigger
+                            continue
                         
                 if total_profit < 0:
                     process_order_label.configure(text=f"{len(positions)} ({total_profit:.2f} USD)", style='Loss.TLabel')
@@ -1188,7 +1217,7 @@ def run_trading_bot():
                     rsi_curr = df['RSI'].iloc[-1]
                     is_rsi_ok = rsi_curr < 75
 
-                    if is_in_bull_trend and is_in_buy_zone and is_rsi_ok and not is_on_cooldown():
+                    if is_in_bull_trend and is_in_buy_zone and is_rsi_ok and current_time != get_last_order_time():
                         # ตั้ง Stop Loss ไว้ใต้เส้น EMA_Slow เล็กน้อยเพื่อเป็น Buffer
                         # สำหรับ XAU/BTC การตั้ง SL ตาม % อาจจะดีกว่า
                         # ตัวอย่าง: ตั้ง SL ต่ำกว่าเส้น EMA_Slow ไป 0.15%
@@ -1241,7 +1270,7 @@ def run_trading_bot():
                     is_inside_lower = close_curr > lower_band_curr
                     is_rsi_buy_confirm = rsi_prev < 30 and rsi_curr > 30
 
-                    if was_outside_lower and is_inside_lower and is_rsi_buy_confirm and not is_on_cooldown():
+                    if was_outside_lower and is_inside_lower and is_rsi_buy_confirm and current_time != get_last_order_time():
                         sl_price = df['low'].iloc[-2] # SL ที่ low ของแท่งที่ทะลุออกไป
                         trading_buy(current_time, sl=sl_price)
                         log_message(f"[BB] ✅ BUY: กลับเข้ากรอบล่าง RSI>30", "blue")
@@ -1254,7 +1283,7 @@ def run_trading_bot():
                     is_inside_upper = close_curr < upper_band_curr
                     is_rsi_sell_confirm = rsi_prev > 70 and rsi_curr < 70
                     
-                    if was_outside_upper and is_inside_upper and is_rsi_sell_confirm and not is_on_cooldown():
+                    if was_outside_upper and is_inside_upper and is_rsi_sell_confirm and current_time != get_last_order_time():
                         sl_price = df['high'].iloc[-2] # SL ที่ high ของแท่งที่ทะลุออกไป
                         trading_sell(current_time, sl=sl_price)
                         log_message(f"[BB] 🔻 SELL: กลับเข้ากรอบบน RSI<70", "red")
@@ -1276,13 +1305,13 @@ def run_trading_bot():
                         is_sell = position.type == mt5.ORDER_TYPE_SELL
 
                         # ปิด Buy ถ้า Supertrend พลิกเป็นลง
-                        if is_buy and supertrend_dir == -1:
+                        if is_buy and supertrend_dir == -1 and current_time != get_last_order_time():
                             trading_close(position, current_time)
                             log_message(f"[ST] 🔄 ปิด BUY: ST พลิกลง | P/L: {position.profit:.2f}", "yellow")
                             continue # ไปยัง position ถัดไป
 
                         # ปิด Sell ถ้า Supertrend พลิกเป็นขึ้น
-                        elif is_sell and supertrend_dir == 1:
+                        elif is_sell and supertrend_dir == 1 and current_time != get_last_order_time():
                             trading_close(position, current_time)
                             log_message(f"[ST] 🔄 ปิด SELL: ST พลิกขึ้น | P/L: {position.profit:.2f}", "yellow")
                             continue # ไปยัง position ถัดไป
@@ -1291,12 +1320,12 @@ def run_trading_bot():
                         # เราจะใช้เส้น Supertrend ของ "แท่งก่อนหน้า" เป็น SL เพื่อให้ราคามีพื้นที่หายใจ
                         trailing_stop_price = df['Supertrend'].iloc[-2]
 
-                        if is_buy and close_price < trailing_stop_price:
+                        if is_buy and close_price < trailing_stop_price and current_time != get_last_order_time() :
                             trading_close(position, current_time)
                             log_message(f"[ST] 🛑 SL BUY: ราคาต่ำกว่า ST | P/L: {position.profit:.2f}", "red")
                             continue
 
-                        elif is_sell and close_price > trailing_stop_price:
+                        elif is_sell and close_price > trailing_stop_price and current_time != get_last_order_time():
                             trading_close(position, current_time)
                             log_message(f"[ST] 🛑 SL SELL: ราคาสูงกว่า ST | P/L: {position.profit:.2f}", "red")
                             continue
@@ -1309,7 +1338,7 @@ def run_trading_bot():
                     # 2. RSI > 50 เพื่อยืนยัน Momentum ฝั่งขึ้น
                     is_bullish_flip = supertrend_dir == 1 and supertrend_dir_prev == -1
                     
-                    if is_bullish_flip and rsi_curr > 50 and not is_on_cooldown():
+                    if is_bullish_flip and rsi_curr > 50 and current_time != get_last_order_time():
                         # ไม่จำเป็นต้องมี SL ในคำสั่ง เพราะ logic ด้านบนจะจัดการให้
                         trading_buy(current_time)
                         log_message(f"[ST] ✅ BUY: ST พลิกขึ้น RSI {rsi_curr:.1f}", "green")
@@ -1323,7 +1352,7 @@ def run_trading_bot():
                     # 2. RSI < 50 เพื่อยืนยัน Momentum ฝั่งลง
                     is_bearish_flip = supertrend_dir == -1 and supertrend_dir_prev == 1
                     
-                    if is_bearish_flip and rsi_curr < 50 and not is_on_cooldown():
+                    if is_bearish_flip and rsi_curr < 50 and current_time != get_last_order_time():
                         trading_sell(current_time)
                         log_message(f"[ST] 🔻 SELL: ST พลิกลง RSI {rsi_curr:.1f}", "red")
                         # บันทึกจุด Sell สำหรับแสดงบนกราฟ (ใช้ index จาก dataframe)
@@ -1379,7 +1408,7 @@ def run_trading_bot():
                     # 2. RSI > 60 เพื่อยืนยัน Momentum ที่แข็งแกร่ง
                     is_buy_breakout = close_curr > dcu_curr and close_prev <= dcu_curr
                     
-                    if is_buy_breakout and rsi_curr > 60 and not is_on_cooldown():
+                    if is_buy_breakout and rsi_curr > 60 and current_time != get_last_order_time():
                         trading_buy(current_time)
                         log_message(f"[DC] ✅ BUY: Breakout ช่องบน RSI {rsi_curr:.1f}", "green")
 
@@ -1388,7 +1417,7 @@ def run_trading_bot():
                     # 2. RSI < 40 เพื่อยืนยัน Momentum ที่แข็งแกร่ง
                     is_sell_breakout = close_curr < dcl_curr and close_prev >= dcl_curr
                     
-                    if is_sell_breakout and rsi_curr < 40 and not is_on_cooldown():
+                    if is_sell_breakout and rsi_curr < 40 and current_time != get_last_order_time():
                         trading_sell(current_time)
                         log_message(f"[DC] 🔻 SELL: Breakdown ช่องล่าง RSI {rsi_curr:.1f}", "red")
             
