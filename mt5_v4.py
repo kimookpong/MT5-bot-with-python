@@ -19,7 +19,7 @@ import os
 
 period_count = 0
 period_time = 0
-version = "4.3"
+version = "4.4"
 
 # Cooldown (seconds) to prevent immediate re-entry after an order action
 COOLDOWN_SECONDS = 20
@@ -47,6 +47,12 @@ profit_order_count = 0
 loss_order_count = 0
 
 last_order_time = None
+bot_start_time = None
+
+# History-based stats (computed from MT5 deals since bot_start_time)
+history_total_profit = 0.0
+history_profit_count = 0
+history_loss_count = 0
 
 trigger_profit = 0
 def set_trigger_profit(price):
@@ -64,6 +70,31 @@ def set_last_order_time(time):
 def get_last_order_time():
     global last_order_time
     return last_order_time
+
+def set_bot_start_time(dt: datetime):
+    global bot_start_time
+    bot_start_time = dt
+
+def get_bot_start_time():
+    return bot_start_time
+
+def set_history_stats(total: float, profit_cnt: int, loss_cnt: int):
+    global history_total_profit, history_profit_count, history_loss_count
+    history_total_profit = float(total)
+    history_profit_count = int(profit_cnt)
+    history_loss_count = int(loss_cnt)
+
+def get_history_total_profit() -> float:
+    global history_total_profit
+    return float(history_total_profit)
+
+def get_history_profit_count() -> int:
+    global history_profit_count
+    return int(history_profit_count)
+
+def get_history_loss_count() -> int:
+    global history_loss_count
+    return int(history_loss_count)
 
 # -------------- Helper conversions for user-editable params --------------
 def _to_int(s, default):
@@ -116,6 +147,17 @@ def set_status(status):
     global trading_bot_status
     trading_bot_status = status
 
+# Ensure Windows uses our app identity (affects taskbar icon & grouping)
+try:
+    if sys.platform == 'win32':
+        import ctypes
+        # Set AppUserModelID BEFORE any windows are created
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            'kimookpong.mt5autobot.trading.v43'
+        )
+except Exception:
+    pass
+
 # Create the main window - Full screen
 root = tk.Tk()
 root.title(f"MT5 Autobot V.{version}")
@@ -135,21 +177,11 @@ def resource_path(relative_path: str) -> str:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
-# Set window icon (for title bar and taskbar)
+# Set window icon (for title bar and taskbar). Using default= applies to all toplevels
 try:
-    root.iconbitmap(resource_path('autobot.ico'))
+    root.iconbitmap(default=resource_path('autobot.ico'))
 except Exception:
     pass  # If icon file not found, continue without it
-
-# Set taskbar icon for Windows (requires ctypes for AppUserModelID)
-try:
-    if sys.platform == 'win32':
-        import ctypes
-        # Set AppUserModelID to show custom icon on taskbar
-        myappid = 'kimookpong.mt5autobot.trading.4.2'
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-except Exception:
-    pass  # If fails, continue without custom taskbar grouping
 
 # Configure modern light theme with custom colors
 style = ttk.Style()
@@ -513,7 +545,13 @@ usdt_balance_label = ttk.Label(info_frame, text="Balance: --",
                                style='Info.TLabel', font=('Segoe UI', 9, 'bold'))
 usdt_balance_label.pack(anchor="w", pady=2, padx=5)
 
-total_profit_label = ttk.Label(info_frame, text="Total Profit: --", 
+# Active Orders (mirrors the dashboard card, with color when P/L != 0)
+active_orders_info_label = ttk.Label(info_frame, text="Active Orders: 0 (0.00 USD)", 
+                               style='Info.TLabel', font=('Segoe UI', 8))
+active_orders_info_label.pack(anchor="w", pady=2, padx=5)
+
+# Total P/L (session) derived from Trading History
+total_profit_label = ttk.Label(info_frame, text="Total P/L: --", 
                                style='Info.TLabel', font=('Segoe UI', 8))
 total_profit_label.pack(anchor="w", pady=2, padx=5)
 
@@ -533,17 +571,7 @@ period_count_label = ttk.Label(info_frame, text="Periods: --",
                                style='Info.TLabel', font=('Segoe UI', 8))
 period_count_label.pack(anchor="w", pady=2, padx=5)
 
-# Contact Section
-# --- ใช้ 'Card.TLabelframe' ---
-contact_frame = ttk.LabelFrame(left_frame, text="📞 Contact", style='Card.TLabelframe', padding=(10, 10, 10, 10))
-contact_frame.pack(fill="x", side="bottom")
-
-ttk.Label(contact_frame, text="Created by: kimookpong", 
-          style='Info.TLabel', font=('Segoe UI', 8, 'bold')).pack(anchor="w", padx=5, pady=1)
-ttk.Label(contact_frame, text=f"Version: {version}", 
-          style='Info.TLabel', font=('Segoe UI', 8)).pack(anchor="w", padx=5, pady=1)
-ttk.Label(contact_frame, text="kimookpong@gmail.com", 
-          style='Info.TLabel', font=('Segoe UI', 8)).pack(anchor="w", padx=5, pady=1)
+ 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CENTER PANEL - Trading Dashboard & Chart
@@ -824,6 +852,122 @@ log_text.tag_config("blue", foreground='#63b3ed', font=("Consolas", 9, "bold"))
 log_text.tag_config("grey", foreground='#a0aec0', font=("Consolas", 9))
 log_text.tag_config("yellow", foreground='#f6ad55', font=("Consolas", 9, "bold"))
 
+# Trade History UI (Under Trading Log)
+history_frame = ttk.LabelFrame(right_frame, text="📜 Trade History", style='Card.TLabelframe', padding=(10, 10, 10, 10))
+history_frame.pack(fill="x", pady=(0, 10))
+
+# Styled Treeview to match dark theme
+style.configure('History.Treeview',
+                background='#2d3748',
+                fieldbackground='#2d3748',
+                foreground='#a0aec0',
+                borderwidth=0)
+style.map('History.Treeview',
+          background=[('selected', '#4a5568')],
+          foreground=[('selected', '#f7fafc')])
+style.configure('History.Treeview.Heading',
+                background='#2d3748',
+                foreground='#63b3ed',
+                font=('Segoe UI', 9, 'bold'),
+                relief='flat')
+style.map('History.Treeview.Heading',
+          background=[('active', '#4a5568')])
+
+history_cols = ("time", "action", "volume", "price", "profit")
+history_tree = ttk.Treeview(history_frame, columns=history_cols, show="headings", height=7, style='History.Treeview')
+for col, hdr, w in [
+    ("time", "Time", 110),
+    ("action", "Action", 90),
+    ("volume", "Vol", 60),
+    ("price", "Price", 90),
+    ("profit", "Profit", 90),
+]:
+    history_tree.heading(col, text=hdr)
+    history_tree.column(col, width=w, anchor='center')
+
+history_scroll = ttk.Scrollbar(history_frame, orient="vertical", command=history_tree.yview)
+history_tree.configure(yscrollcommand=history_scroll.set)
+history_tree.pack(side="left", fill="x", expand=True)
+history_scroll.pack(side="right", fill="y")
+
+# Row tag colors to match profit/loss styles
+history_tree.tag_configure('profit_row', foreground='#68D391')
+history_tree.tag_configure('loss_row', foreground='#FC8181')
+
+def _format_time(ts):
+    try:
+        # mt5 deal.time is seconds epoch
+        return datetime.fromtimestamp(int(ts)).strftime("%d/%m %H:%M")
+    except Exception:
+        return "-"
+
+def refresh_trade_history():
+    """Fetch MT5 deals since bot_start_time for current symbol and show in history tree."""
+    try:
+        start_dt = get_bot_start_time()
+        if not start_dt:
+            # No start yet; clear and return
+            for item in history_tree.get_children():
+                history_tree.delete(item)
+            return
+        if not hasattr(mt5, 'initialized') or not mt5.initialized():
+            return
+        symbol = symbol_var.get()
+        # Request deals from start to now
+        deals = mt5.history_deals_get(start_dt, datetime.now())
+        if deals is None:
+            return
+        # Filter by symbol and limit to last 50
+        rows = []
+        total_profit_sum = 0.0
+        profit_cnt = 0
+        loss_cnt = 0
+        for d in deals:
+            try:
+                if getattr(d, 'symbol', None) != symbol:
+                    continue
+                when = _format_time(getattr(d, 'time', 0))
+                vol = float(getattr(d, 'volume', 0) or 0)
+                price = float(getattr(d, 'price', 0) or 0)
+                profit = float(getattr(d, 'profit', 0) or 0)
+                entry = int(getattr(d, 'entry', -1))
+                deal_type = int(getattr(d, 'type', -1))
+                side = 'BUY' if deal_type == mt5.DEAL_TYPE_BUY else ('SELL' if deal_type == mt5.DEAL_TYPE_SELL else '-')
+                entry_txt = 'OPEN' if entry == mt5.DEAL_ENTRY_IN else ('CLOSE' if entry == mt5.DEAL_ENTRY_OUT else '-')
+                action = f"{side} {entry_txt}"
+                rows.append(((when, action, f"{vol:.2f}", f"{price:.2f}", f"{profit:.2f}"), profit))
+                # Count only closing deals for win/loss stats; accumulate profit anyway
+                total_profit_sum += profit
+                if entry == mt5.DEAL_ENTRY_OUT:
+                    if profit >= 0:
+                        profit_cnt += 1
+                    else:
+                        loss_cnt += 1
+            except Exception:
+                continue
+        rows = rows[-50:]
+        # Rebuild tree content
+        existing = history_tree.get_children()
+        if existing:
+            history_tree.delete(*existing)
+        for values, p in rows:
+            tag = 'profit_row' if p >= 0 else 'loss_row'
+            history_tree.insert("", "end", values=values, tags=(tag,))
+        # Persist history stats for Account Info panel
+        set_history_stats(total_profit_sum, profit_cnt, loss_cnt)
+    except Exception:
+        # Avoid spamming logs from UI refresh
+        pass
+
+def _schedule_history_refresh():
+    try:
+        refresh_trade_history()
+    finally:
+        root.after(7000, _schedule_history_refresh)
+
+# Start periodic history refresh
+_schedule_history_refresh()
+
 # Function to log messages
 def log_message(message, color="black"):
     now = datetime.now()
@@ -918,6 +1062,11 @@ def disconnect_mt5():
 # Function to start the bot
 def start_bot():
     set_status(True)
+    # บันทึกเวลาเริ่มต้นของบอทเพื่ออ้างอิงดึง History
+    try:
+        set_bot_start_time(datetime.now())
+    except Exception:
+        pass
     log_message("🚀 เริ่มบอท...", "green")
     bot_thread = threading.Thread(target=run_trading_bot, daemon=True)
     bot_thread.start()
@@ -1026,6 +1175,72 @@ def trading_sell(current_time, sl=None):
         log_message(f"✅ เปิด SELL #{result.order} @ {price:.2f}", "green")
     else:
         log_message(f"❌ คำสั่ง SELL ล้มเหลว: {result.comment}", "red")
+
+
+# --- Helper: Update SL to follow Supertrend ---
+def _round_price_for_symbol(symbol: str, price: float) -> float:
+    try:
+        info = mt5.symbol_info(symbol)
+        if info and hasattr(info, 'digits'):
+            return round(price, int(info.digits))
+    except Exception:
+        pass
+    return price
+
+def _can_set_sl(symbol: str, new_sl: float, is_buy: bool) -> bool:
+    """Respect broker min stop distance; return True if SL seems allowable."""
+    try:
+        info = mt5.symbol_info(symbol)
+        tick = mt5.symbol_info_tick(symbol)
+        if not info or not tick:
+            return True
+        point = getattr(info, 'point', 0.0) or 0.0
+        level = getattr(info, 'trade_stops_level', 0) or 0
+        min_dist = level * point
+        if is_buy:
+            # SL must be below current Bid by at least min distance
+            return new_sl <= (tick.bid - min_dist)
+        else:
+            # SL for sell is above current Ask by at least min distance
+            return new_sl >= (tick.ask + min_dist)
+    except Exception:
+        return True
+
+def update_position_sl_to_supertrend(position, st_value):
+    """Update a position's SL to the provided Supertrend value, only if it tightens risk."""
+    try:
+        if pd.isna(st_value):
+            return
+        symbol = position.symbol
+        is_buy = (position.type == mt5.ORDER_TYPE_BUY)
+        new_sl = _round_price_for_symbol(symbol, float(st_value))
+        cur_sl = float(position.sl) if position.sl else 0.0
+
+        # Only tighten: for BUY, raise SL; for SELL, lower SL
+        if is_buy and cur_sl and new_sl <= cur_sl:
+            return
+        if (not is_buy) and cur_sl and new_sl >= cur_sl:
+            return
+
+        if not _can_set_sl(symbol, new_sl, is_buy):
+            return
+
+        req = {
+            "action": mt5.TRADE_ACTION_SLTP,
+            "position": position.ticket,
+            "symbol": symbol,
+            "sl": new_sl,
+            "tp": position.tp or 0.0,
+            "deviation": 10,
+            "magic": 234000,
+            "comment": "Update SL to Supertrend",
+        }
+        result = mt5.order_send(req)
+        if result and result.retcode == mt5.TRADE_RETCODE_DONE:
+            log_message(f"🔧 อัพเดต SL ตาม Supertrend เป็น {new_sl}", "blue")
+    except Exception:
+        # Be silent to avoid log spam on transient errors
+        return
 
 def trading_close(position, current_time):
         """
@@ -1138,16 +1353,18 @@ def run_trading_bot():
             period_count_label.config(text=f"Periods: {period_count}")
             # log_message(f"[BOT] Time: {current_time}", "blue")
 
-            if get_stat('profit') < 0:
-                trading_completed_label.configure(text=f"{get_stat('profit'):.2f} USD", style='Loss.TLabel')
-                total_profit_label.config(text=f"Total Profit: ${get_stat('profit'):.2f} USD", foreground='#FC8181')
+            # Use history-based stats for Account Info
+            hist_pl = get_history_total_profit()
+            if hist_pl < 0:
+                trading_completed_label.configure(text=f"{hist_pl:.2f} USD", style='Loss.TLabel')
+                total_profit_label.config(text=f"Total P/L: ${hist_pl:.2f} USD", foreground='#FC8181')
             else:
-                trading_completed_label.configure(text=f"{get_stat('profit'):.2f} USD", style='Profit.TLabel')
-                total_profit_label.config(text=f"Total Profit: ${get_stat('profit'):.2f} USD", foreground='#68D391')
-            
-            # Update profit and loss order counts
-            profit_order_label.config(text=f"Profit Orders: {get_stat('profit_count')}")
-            loss_order_label.config(text=f"Loss Orders: {get_stat('loss_count')}")
+                trading_completed_label.configure(text=f"{hist_pl:.2f} USD", style='Profit.TLabel')
+                total_profit_label.config(text=f"Total P/L: ${hist_pl:.2f} USD", foreground='#68D391')
+
+            # Update profit and loss order counts from history (close deals only)
+            profit_order_label.config(text=f"Profit Orders: {get_history_profit_count()}")
+            loss_order_label.config(text=f"Loss Orders: {get_history_loss_count()}")
 
             positions=mt5.positions_get(symbol=symbol)
             process_order_label.config(text=f"0 (0.00)")
@@ -1168,20 +1385,26 @@ def run_trading_bot():
                             log_message(f"📊 อัพเดท Trailing: {trigger_length:.2f} USD", "blue")
                         
                         # 🛑 บังคับปิดเมื่อกำไรลดลงต่ำกว่า trigger_profit
-                        elif trigger_length < get_trigger_profit() and get_trigger_profit() > 0:
+                        elif profit < get_trigger_profit() and get_trigger_profit() > 0:
                             trading_close(position, current_time)
                             log_message(f"[TP] 💰 Trailing Profit: ปิดที่ {profit:.2f} (จาก {get_trigger_profit():.2f})", "green")
                             set_trigger_profit(0)  # รีเซ็ต trigger
                             continue
                         
                 if total_profit < 0:
+                    # Dashboard card
                     process_order_label.configure(text=f"{len(positions)} ({total_profit:.2f} USD)", style='Loss.TLabel')
+                    # Account Info mirror
+                    active_orders_info_label.config(text=f"Active Orders: {len(positions)} ({total_profit:.2f} USD)", foreground='#FC8181')
                 else:
                     process_order_label.configure(text=f"{len(positions)} ({total_profit:.2f} USD)", style='Profit.TLabel')
+                    active_orders_info_label.config(text=f"Active Orders: {len(positions)} ({total_profit:.2f} USD)", foreground='#68D391')
             else:
                 # รีเซ็ต trigger_profit เมื่อไม่มี position
                 if get_trigger_profit() > 0:
                     set_trigger_profit(0)
+                # No open positions -> neutral style
+                active_orders_info_label.config(text="Active Orders: 0 (0.00 USD)", foreground='#a0aec0')
             
             if indicator == "BULLMARKET":
                 # ดึงข้อมูลที่จำเป็น
@@ -1192,7 +1415,7 @@ def run_trading_bot():
 
                 # --- EXIT LOGIC ---
                 # ตรวจสอบเฉพาะ Position ฝั่ง BUY
-                if len(positions) > 0:
+                if len(positions) > 0 and current_time != get_last_order_time():
                     for position in positions:
                         if position.type == mt5.ORDER_TYPE_BUY:
                             # ✅ STOP LOSS: ปิดทันทีถ้าราคาปิด "ต่ำกว่า" เส้นล่างของ Band (EMA_Slow)
@@ -1203,7 +1426,7 @@ def run_trading_bot():
                 
                 # --- ENTRY LOGIC ---
                 # เข้าออเดอร์ BUY เมื่อไม่มี Position และเงื่อนไขทั้งหมดเป็นจริง
-                elif len(positions) == 0:
+                elif len(positions) == 0 and current_time != get_last_order_time():
                     
                     # --- BUY CONDITIONS ---
                     # 1. อยู่ในแนวโน้มกระทิง (ราคาอยู่เหนือเส้น EMA 100)
@@ -1217,7 +1440,7 @@ def run_trading_bot():
                     rsi_curr = df['RSI'].iloc[-1]
                     is_rsi_ok = rsi_curr < 75
 
-                    if is_in_bull_trend and is_in_buy_zone and is_rsi_ok and current_time != get_last_order_time():
+                    if is_in_bull_trend and is_in_buy_zone and is_rsi_ok :
                         # ตั้ง Stop Loss ไว้ใต้เส้น EMA_Slow เล็กน้อยเพื่อเป็น Buffer
                         # สำหรับ XAU/BTC การตั้ง SL ตาม % อาจจะดีกว่า
                         # ตัวอย่าง: ตั้ง SL ต่ำกว่าเส้น EMA_Slow ไป 0.15%
@@ -1235,7 +1458,7 @@ def run_trading_bot():
                 rsi_curr, rsi_prev = df['RSI'].iloc[-1], df['RSI'].iloc[-2]
 
                 # --- EXIT LOGIC ---
-                if len(positions) > 0:
+                if len(positions) > 0 and current_time != get_last_order_time():
                     for position in positions:
                         is_buy = position.type == mt5.ORDER_TYPE_BUY
                         is_sell = position.type == mt5.ORDER_TYPE_SELL
@@ -1261,7 +1484,7 @@ def run_trading_bot():
                             continue
                 
                 # --- ENTRY LOGIC ---
-                elif len(positions) == 0:
+                elif len(positions) == 0 and current_time != get_last_order_time():
                     # --- BUY CONDITIONS ---
                     # 1. แท่งก่อนหน้า "ปิดนอก" กรอบล่าง
                     # 2. แท่งปัจจุบัน "ปิดกลับเข้ามาใน" กรอบล่าง
@@ -1270,7 +1493,7 @@ def run_trading_bot():
                     is_inside_lower = close_curr > lower_band_curr
                     is_rsi_buy_confirm = rsi_prev < 30 and rsi_curr > 30
 
-                    if was_outside_lower and is_inside_lower and is_rsi_buy_confirm and current_time != get_last_order_time():
+                    if was_outside_lower and is_inside_lower and is_rsi_buy_confirm:
                         sl_price = df['low'].iloc[-2] # SL ที่ low ของแท่งที่ทะลุออกไป
                         trading_buy(current_time, sl=sl_price)
                         log_message(f"[BB] ✅ BUY: กลับเข้ากรอบล่าง RSI>30", "blue")
@@ -1283,7 +1506,7 @@ def run_trading_bot():
                     is_inside_upper = close_curr < upper_band_curr
                     is_rsi_sell_confirm = rsi_prev > 70 and rsi_curr < 70
                     
-                    if was_outside_upper and is_inside_upper and is_rsi_sell_confirm and current_time != get_last_order_time():
+                    if was_outside_upper and is_inside_upper and is_rsi_sell_confirm :
                         sl_price = df['high'].iloc[-2] # SL ที่ high ของแท่งที่ทะลุออกไป
                         trading_sell(current_time, sl=sl_price)
                         log_message(f"[BB] 🔻 SELL: กลับเข้ากรอบบน RSI<70", "red")
@@ -1299,48 +1522,58 @@ def run_trading_bot():
                 rsi_curr = df['RSI'].iloc[-1]
                 
                 # Close existing positions with enhanced profit protection
-                if len(positions) > 0:
+                if len(positions) > 0 and current_time != get_last_order_time():
                     for position in positions:
+                     
                         is_buy = position.type == mt5.ORDER_TYPE_BUY
                         is_sell = position.type == mt5.ORDER_TYPE_SELL
 
                         # ปิด Buy ถ้า Supertrend พลิกเป็นลง
-                        if is_buy and supertrend_dir == -1 and current_time != get_last_order_time():
+                        if is_buy and supertrend_dir == -1:
                             trading_close(position, current_time)
                             log_message(f"[ST] 🔄 ปิด BUY: ST พลิกลง | P/L: {position.profit:.2f}", "yellow")
                             continue # ไปยัง position ถัดไป
 
                         # ปิด Sell ถ้า Supertrend พลิกเป็นขึ้น
-                        elif is_sell and supertrend_dir == 1 and current_time != get_last_order_time():
+                        elif is_sell and supertrend_dir == 1:
                             trading_close(position, current_time)
                             log_message(f"[ST] 🔄 ปิด SELL: ST พลิกขึ้น | P/L: {position.profit:.2f}", "yellow")
                             continue # ไปยัง position ถัดไป
-                        
+                            
                         # ✅ EXIT 2: Trailing Stop Loss โดยใช้เส้น Supertrend (หัวใจของกลยุทธ์)
                         # เราจะใช้เส้น Supertrend ของ "แท่งก่อนหน้า" เป็น SL เพื่อให้ราคามีพื้นที่หายใจ
                         trailing_stop_price = df['Supertrend'].iloc[-2]
 
-                        if is_buy and close_price < trailing_stop_price and current_time != get_last_order_time() :
+                        if is_buy and close_price < trailing_stop_price:
                             trading_close(position, current_time)
                             log_message(f"[ST] 🛑 SL BUY: ราคาต่ำกว่า ST | P/L: {position.profit:.2f}", "red")
                             continue
 
-                        elif is_sell and close_price > trailing_stop_price and current_time != get_last_order_time():
+                        elif is_sell and close_price > trailing_stop_price:
                             trading_close(position, current_time)
                             log_message(f"[ST] 🛑 SL SELL: ราคาสูงกว่า ST | P/L: {position.profit:.2f}", "red")
                             continue
 
+                        # ปรับ SL ให้ตามเส้น Supertrend ของแท่งก่อนหน้า (เลื่อนเข้าอย่างเดียว)
+                        update_position_sl_to_supertrend(position, trailing_stop_price)
+
                 # เข้าออเดอร์เมื่อไม่มี Position ค้างอยู่เท่านั้น
-                elif len(positions) == 0:
+                elif len(positions) == 0 and current_time != get_last_order_time():
                     
                     # --- BUY CONDITIONS ---
                     # 1. Supertrend เพิ่งพลิกเป็นขาขึ้น
                     # 2. RSI > 50 เพื่อยืนยัน Momentum ฝั่งขึ้น
                     is_bullish_flip = supertrend_dir == 1 and supertrend_dir_prev == -1
                     
-                    if is_bullish_flip and rsi_curr > 50 and current_time != get_last_order_time():
-                        # ไม่จำเป็นต้องมี SL ในคำสั่ง เพราะ logic ด้านบนจะจัดการให้
-                        trading_buy(current_time)
+                    if is_bullish_flip and rsi_curr > 50 :
+                        # กำหนด SL ตามค่าเส้น Supertrend ปัจจุบัน
+                        try:
+                            info = mt5.symbol_info(symbol)
+                            digits = int(info.digits) if info else 2
+                            sl_entry = round(float(supertrend_val), digits) if pd.notna(supertrend_val) else None
+                        except Exception:
+                            sl_entry = None
+                        trading_buy(current_time, sl=sl_entry)
                         log_message(f"[ST] ✅ BUY: ST พลิกขึ้น RSI {rsi_curr:.1f}", "green")
                         # บันทึกจุด Buy สำหรับแสดงบนกราฟ (ใช้ index จาก dataframe)
                         buy_signals.append({'time': df.index[-1], 'price': close_price})
@@ -1352,8 +1585,15 @@ def run_trading_bot():
                     # 2. RSI < 50 เพื่อยืนยัน Momentum ฝั่งลง
                     is_bearish_flip = supertrend_dir == -1 and supertrend_dir_prev == 1
                     
-                    if is_bearish_flip and rsi_curr < 50 and current_time != get_last_order_time():
-                        trading_sell(current_time)
+                    if is_bearish_flip and rsi_curr < 50:
+                        # กำหนด SL ตามค่าเส้น Supertrend ปัจจุบัน
+                        try:
+                            info = mt5.symbol_info(symbol)
+                            digits = int(info.digits) if info else 2
+                            sl_entry = round(float(supertrend_val), digits) if pd.notna(supertrend_val) else None
+                        except Exception:
+                            sl_entry = None
+                        trading_sell(current_time, sl=sl_entry)
                         log_message(f"[ST] 🔻 SELL: ST พลิกลง RSI {rsi_curr:.1f}", "red")
                         # บันทึกจุด Sell สำหรับแสดงบนกราฟ (ใช้ index จาก dataframe)
                         sell_signals.append({'time': df.index[-1], 'price': close_price})
@@ -1370,7 +1610,7 @@ def run_trading_bot():
 
                 # --- EXIT LOGIC ---
                 # ตรวจสอบตำแหน่งที่เปิดอยู่เพื่อปิด
-                if len(positions) > 0:
+                if len(positions) > 0 and current_time != get_last_order_time():
                     for position in positions:
                         is_buy = position.type == mt5.ORDER_TYPE_BUY
                         is_sell = position.type == mt5.ORDER_TYPE_SELL
@@ -1401,14 +1641,14 @@ def run_trading_bot():
 
                 # --- ENTRY LOGIC ---
                 # เข้าออเดอร์เมื่อไม่มี Position ค้างอยู่
-                elif len(positions) == 0:
+                elif len(positions) == 0 and current_time != get_last_order_time():
                     
                     # --- BUY CONDITIONS ---
                     # 1. ราคาเพิ่งทะลุช่องบน (Breakout)
                     # 2. RSI > 60 เพื่อยืนยัน Momentum ที่แข็งแกร่ง
                     is_buy_breakout = close_curr > dcu_curr and close_prev <= dcu_curr
                     
-                    if is_buy_breakout and rsi_curr > 60 and current_time != get_last_order_time():
+                    if is_buy_breakout and rsi_curr > 60:
                         trading_buy(current_time)
                         log_message(f"[DC] ✅ BUY: Breakout ช่องบน RSI {rsi_curr:.1f}", "green")
 
@@ -1416,8 +1656,8 @@ def run_trading_bot():
                     # 1. ราคาเพิ่งทะลุช่องล่าง (Breakdown)
                     # 2. RSI < 40 เพื่อยืนยัน Momentum ที่แข็งแกร่ง
                     is_sell_breakout = close_curr < dcl_curr and close_prev >= dcl_curr
-                    
-                    if is_sell_breakout and rsi_curr < 40 and current_time != get_last_order_time():
+
+                    if is_sell_breakout and rsi_curr < 40:
                         trading_sell(current_time)
                         log_message(f"[DC] 🔻 SELL: Breakdown ช่องล่าง RSI {rsi_curr:.1f}", "red")
             
@@ -1488,9 +1728,9 @@ def get_candlestick_data(symbol, timeframe, num_bars):
     except Exception:
         bb_len, bb_std = 20, 2.0
     bbands = ta.bbands(df['close'], length=bb_len, std=bb_std)
-    df['BB_Lower'] = bbands['BBL_20_2.0_2.0']
-    df['BB_Middle'] = bbands['BBM_20_2.0_2.0']
-    df['BB_Upper'] = bbands['BBU_20_2.0_2.0']
+    df['BB_Lower'] = bbands['BBL_' + str(bb_len) + '_' + str(bb_std)+ '_' + str(bb_std)]
+    df['BB_Middle'] = bbands['BBM_' + str(bb_len) + '_' + str(bb_std)+ '_' + str(bb_std)]
+    df['BB_Upper'] = bbands['BBU_' + str(bb_len) + '_' + str(bb_std)+ '_' + str(bb_std)]
 
     # Calculate Supertrend - Optimized for 5m timeframe
     # Using length=12 and multiplier=3 for better sensitivity on 5min charts
@@ -1501,9 +1741,9 @@ def get_candlestick_data(symbol, timeframe, num_bars):
         st_len, st_mult = 12, 3.0
     supertrend_result = ta.supertrend(high=df['high'], low=df['low'], close=df['close'], 
                                       length=st_len, multiplier=st_mult)
-    df['Supertrend'] = supertrend_result['SUPERT_12_3.0']
-    df['Supertrend_Direction'] = supertrend_result['SUPERTd_12_3.0']
-    
+    df['Supertrend'] = supertrend_result['SUPERT_' + str(st_len) + '_' + str(st_mult)]
+    df['Supertrend_Direction'] = supertrend_result['SUPERTd_' + str(st_len) + '_' + str(st_mult)]
+
     df['Buy_Signal'] = (df['close'] > df['SMA']) & (df['RSI'] < 30)
     df['Sell_Signal'] = (df['close'] < df['EMA']) & (df['RSI'] > 70)
 
@@ -1514,10 +1754,10 @@ def get_candlestick_data(symbol, timeframe, num_bars):
         dc_lower, dc_upper = 25, 25
     donchian = ta.donchian(df['high'], df['low'], lower_length=dc_lower, upper_length=dc_upper)
     # แก้ไขการตั้งชื่อ column ให้ตรงกับที่ใช้ในโค้ด
-    df['DC_Lower'] = donchian['DCL_25_25']
-    df['DC_Upper'] = donchian['DCU_25_25']
-    df['DC_Middle'] = donchian['DCM_25_25']
-    
+    df['DC_Lower'] = donchian['DCL_'+str(dc_lower)+'_'+str(dc_upper)]
+    df['DC_Upper'] = donchian['DCU_'+str(dc_upper)+'_'+str(dc_lower)]
+    df['DC_Middle'] = donchian['DCM_'+str(dc_lower)+'_'+str(dc_upper)]
+
     # เก็บชื่อเดิมไว้เพื่อความเข้ากันได้กับกราฟ
     df['DCL'] = df['DC_Lower']
     df['DCU'] = df['DC_Upper']
